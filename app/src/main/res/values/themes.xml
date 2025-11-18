@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      This is the primary theme for the entire app.
+      By using ".NoActionBar" as the parent, we give control of the
+      UI colors and app bar to Jetpack Compose.
+    -->
+    <style name="Theme.FinanceTracker" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- You can optionally set system bar colors here if needed -->
+        <!-- <item name="android:statusBarColor">@android:color/transparent</item> -->
+        <!-- <item name="android:windowLightStatusBar">true</item> -->
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
+</resources>
