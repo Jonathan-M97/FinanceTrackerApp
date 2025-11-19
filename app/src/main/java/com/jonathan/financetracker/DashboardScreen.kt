@@ -17,10 +17,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,6 +40,13 @@ import androidx.compose.ui.unit.dp
 import com.jonathan.financetracker.data.Transaction
 import com.jonathan.financetracker.data.transactions
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
+import androidx.compose.runtime.produceState
+import com.google.firebase.Firebase
+import com.google.firebase.app
+import com.google.firebase.firestore.firestore
+//import com.google.firebase.firestore.ktx.firestore
+//import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
 
 /**
  * Composable that displays the topBar and displays back button if back navigation is possible.
@@ -45,6 +55,7 @@ import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 @Composable
 fun FinanceAppBar(
     currentScreen: String,
+    onSignOutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     CenterAlignedTopAppBar(
@@ -57,16 +68,38 @@ fun FinanceAppBar(
             containerColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
         modifier = modifier.statusBarsPadding(),
+        actions = {
+            IconButton(onClick = onSignOutClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Sign Out",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
     )
 }
 
 @Composable
-fun FinanceTrackerApp() {
+fun FinanceTrackerApp(
+    onSignOut: () -> Unit
+) {
+
+    // This state will hold the list of transactions fetched from Firestore.
+    // It starts with an empty list and will be updated once data is loaded.
+    val transactionsState = produceState<List<Transaction>>(initialValue = emptyList()) {
+        val firebaseApp = Firebase.app
+        // Get a reference to the Firestore database
+        val db = Firebase.firestore(firebaseApp, "financetracker")
+        // Fetch all documents from the "transactions" collection
+        value = db.collection("transactions").get().await().toObjects(Transaction::class.java)
+    }
 
     Scaffold(
         topBar = {
             FinanceAppBar(
-                currentScreen = "Finance Tracker"
+                currentScreen = "Finance Tracker",
+                onSignOutClick = onSignOut
             )
         }
     ) { innerPadding ->
@@ -89,7 +122,7 @@ fun FinanceTrackerApp() {
                         .padding(end = dimensionResource(R.dimen.padding_extra_small))
                     )
                     DetailCard("Mortgage", "1.00", modifier = Modifier
-                            .weight(1f)
+                        .weight(1f)
                         .padding(end = dimensionResource(R.dimen.padding_extra_small)))
                     DetailCard("Income", "1.00", modifier = Modifier
                         .weight(1f)
@@ -97,11 +130,12 @@ fun FinanceTrackerApp() {
                 }
 
             }
-            items(transactions) { transaction ->
-                TransactionItem(
-                    transaction = transaction
-                )
-            }
+            // Use the data from our new state holder
+                items(transactionsState.value) { transaction ->
+                    TransactionItem(
+                        transaction = transaction
+                    )
+                }
         }
     }
 }
@@ -197,10 +231,12 @@ fun DetailCardPreview() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun FinanceTrackerAppPreview() {
-    FinanceTrackerTheme {
-        FinanceTrackerApp()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun FinanceTrackerAppPreview() {
+//    FinanceTrackerTheme {
+//        FinanceTrackerApp(
+//
+//        )
+//    }
+//}

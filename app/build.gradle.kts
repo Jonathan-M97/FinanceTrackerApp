@@ -69,6 +69,24 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation ("com.google.android.material:material:1.13.0")
 
+    // Firebase - Import the Bill of Materials (BoM)
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+
+    // Add the dependency for the Cloud Firestore KTX library
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // Recommended: Add Kotlin Coroutines for asynchronous operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+
+    // Firestore KTX (already here)
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // ADD THIS: Firebase Authentication KTX library
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    // Coroutines for Play Services (already here)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+
 
 
 
