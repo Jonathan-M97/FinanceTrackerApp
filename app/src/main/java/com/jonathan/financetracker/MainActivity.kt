@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.jonathan.financetracker.ui.screens.DashboardScreen
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 
 class MainActivity : ComponentActivity() {
@@ -42,7 +43,7 @@ fun AppNavigator() {
 
     if (isLoggedIn) {
         // If logged in, show the main finance tracker app
-        FinanceTrackerApp(
+        DashboardScreen(
             onSignOut = {
                 auth.signOut()  // sign the user out from firebase
                 isLoggedIn = false  // update our state to re-compose
