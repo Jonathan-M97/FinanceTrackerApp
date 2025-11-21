@@ -50,7 +50,11 @@ fun DashboardScreen(
                 FloatingActionButton(onClick = { showDialog = true }) {
                     Icon(Icons.Filled.Add, "Add Transaction")
                 }
+            } else if (currentPage == FinancePage.BUDGETS) {
+            FloatingActionButton(onClick = { showDialog = true }) {
+                Icon(Icons.Filled.Add, "Add Budget")
             }
+        }
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
@@ -81,7 +85,15 @@ fun DashboardScreen(
                     )
                 }
                 FinancePage.BUDGETS -> {
-                    BudgetsScreen()
+                    BudgetsScreen(
+                        showAddBudgetDialog = showDialog,
+                        refreshKey = refreshKey,
+                        onDialogDismiss = { showDialog = false },
+                        onDialogConfirm = {
+                            refreshKey++
+                            showDialog = false
+                        }
+                    )
                 }
             }
         }

@@ -10,12 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.jonathan.financetracker.data.Budget
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 
 @Composable
 fun BudgetItem(
-    category: String,
-    amount: String,
+    budget: Budget,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -25,12 +25,12 @@ fun BudgetItem(
 
     ) {
         Text(
-            text = category,
+            text = budget.category,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
-            text = amount,
+            text = budget.amount.toString(),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -43,6 +43,7 @@ fun BudgetItem(
 @Composable
 fun BudgetItemPreview() {
     FinanceTrackerTheme {
-        BudgetItem("Groceries", "1.00", modifier = Modifier.padding(8.dp))
+        BudgetItem(
+            Budget("Groceries", 200.00))
     }
 }
