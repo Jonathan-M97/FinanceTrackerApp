@@ -3,10 +3,13 @@ plugins {
     //id("com.android.application")
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    id("kotlin-kapt")
 }
 
 android {
@@ -69,29 +72,19 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("androidx.compose.material3:material3")
     implementation ("com.google.android.material:material:1.13.0")
 
     // Firebase - Import the Bill of Materials (BoM)
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
-
-    // Add the dependency for the Cloud Firestore KTX library
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+
 
     // Recommended: Add Kotlin Coroutines for asynchronous operations
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
-    // Firestore KTX (already here)
-    implementation("com.google.firebase:firebase-firestore-ktx")
-
-    // ADD THIS: Firebase Authentication KTX library
-    implementation("com.google.firebase:firebase-auth-ktx")
-
-    // Coroutines for Play Services (already here)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
-
-
-
-
-
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
 }

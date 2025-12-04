@@ -16,7 +16,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.app
 import com.google.firebase.firestore.firestore
 import com.jonathan.financetracker.R
-import com.jonathan.financetracker.data.Transaction
+import com.jonathan.financetracker.data.model.Transaction
 import com.jonathan.financetracker.data.addTransactionToFirestore
 import com.jonathan.financetracker.ui.components.AddTransactionDialog
 import com.jonathan.financetracker.ui.components.TransactionItem

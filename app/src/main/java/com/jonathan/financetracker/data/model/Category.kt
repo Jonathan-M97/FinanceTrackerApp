@@ -1,4 +1,4 @@
-package com.jonathan.financetracker.data
+package com.jonathan.financetracker.data.model
 
 data class Category (
     val color: String = "",

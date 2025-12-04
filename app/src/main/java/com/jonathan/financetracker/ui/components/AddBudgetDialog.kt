@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.jonathan.financetracker.data.Budget
+import com.jonathan.financetracker.data.model.Budget
 
 @Composable
 fun AddBudgetDialog(

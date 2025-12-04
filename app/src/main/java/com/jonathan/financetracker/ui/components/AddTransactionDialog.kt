@@ -17,7 +17,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -30,8 +29,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.Firebase
 import com.google.firebase.app
 import com.google.firebase.firestore.firestore
-import com.jonathan.financetracker.data.Transaction
-import com.jonathan.financetracker.data.Category
+import com.jonathan.financetracker.data.model.Transaction
+import com.jonathan.financetracker.data.model.Category
 import com.jonathan.financetracker.ui.viewmodel.CategoryViewModel
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate

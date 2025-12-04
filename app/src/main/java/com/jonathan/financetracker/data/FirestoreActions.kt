@@ -4,6 +4,8 @@ import com.google.firebase.Firebase
 import com.google.firebase.app
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import com.jonathan.financetracker.data.model.Budget
+import com.jonathan.financetracker.data.model.Transaction
 
 fun addTransactionToFirestore(transaction: Transaction) {
     val firebaseApp = Firebase.app

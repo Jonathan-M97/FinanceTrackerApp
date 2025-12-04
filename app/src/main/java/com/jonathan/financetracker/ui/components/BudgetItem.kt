@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.jonathan.financetracker.data.Budget
+import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 
 @Composable
