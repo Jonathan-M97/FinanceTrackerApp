@@ -1,4 +1,4 @@
-package com.jonathan.financetracker.ui.screens
+package com.jonathan.financetracker.ui.Budget
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding

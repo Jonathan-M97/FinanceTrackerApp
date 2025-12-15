@@ -12,8 +12,8 @@ import dagger.hilt.components.SingletonComponent
 
 @Module
 @InstallIn(SingletonComponent::class)
-object FirebaseHiltModule {
+object  FirebaseHiltModule {
     @Provides fun auth(): FirebaseAuth = Firebase.auth
 
-    @Provides fun firestore(): FirebaseFirestore = Firebase.firestore
+    @Provides fun firestore(): FirebaseFirestore = Firebase.firestore("financetracker")
 }

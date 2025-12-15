@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.firestore
 import com.jonathan.financetracker.data.model.Category
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ class CategoryViewModel : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     val categories: StateFlow<List<Category>> = _categories
+
 
     fun fetchCategories() {
         viewModelScope.launch {
