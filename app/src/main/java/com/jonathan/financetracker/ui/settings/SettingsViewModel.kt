@@ -20,10 +20,14 @@ class SettingsViewModel @Inject constructor(
     val isAnonymous: StateFlow<Boolean>
         get() = _isAnonymous.asStateFlow()
 
+    private val _userEmail = MutableStateFlow<String?>(null)
+    val userEmail: StateFlow<String?> = _userEmail.asStateFlow()
+
     fun loadCurrentUser() {
         launchCatching {
             val currentUser = authRepository.currentUser
             _isAnonymous.value = currentUser != null && currentUser.isAnonymous
+            _userEmail.value = currentUser?.email
         }
     }
 

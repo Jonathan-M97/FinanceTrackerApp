@@ -52,7 +52,7 @@ fun StandardButton(@StringRes label: Int, onButtonClick: () -> Unit) {
             .padding(horizontal = 24.dp),
         onClick = onButtonClick,
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = Color.White
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.surface)

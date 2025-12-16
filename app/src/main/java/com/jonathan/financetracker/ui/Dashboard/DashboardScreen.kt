@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,10 +61,12 @@ fun DashboardScreen(
     } else {
 
         val transactions = viewModel.Transactions.collectAsStateWithLifecycle(emptyList())
+        val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
 
         DashboardScreenContent(
             transactions = transactions.value,
-            openSettingsScreen = openSettingsScreen
+            openSettingsScreen = openSettingsScreen,
+            isAnonymous = isAnonymous
 //            updateItem = viewModel::updateItem
         )
 
@@ -82,6 +85,8 @@ fun DashboardScreenContent(
     transactions: List<Transaction>,
 
     openSettingsScreen: () -> Unit,
+
+    isAnonymous: Boolean,
 
 //    updateItem: (Transaction) -> Unit
 ) {
@@ -118,6 +123,16 @@ fun DashboardScreenContent(
 //        }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
+
+            if (isAnonymous) {
+                Text(
+                    text = "Using Guest Account",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(dimensionResource(R.dimen.padding_medium)),
+                    textAlign = TextAlign.Center
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -15,6 +15,8 @@ class AuthRepository @Inject constructor(
         authRemoteDataSource.createGuestAccount()
     }
 
+//    suspend fun getCurrentUserEmail(): String? = auth.currentUser?.email
+
     suspend fun signIn(email: String, password: String) {
         authRemoteDataSource.signIn(email, password)
     }

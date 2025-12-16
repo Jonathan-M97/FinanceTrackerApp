@@ -12,6 +12,9 @@ import javax.inject.Inject
 class AuthRemoteDataSource @Inject constructor(private val auth: FirebaseAuth) {
     val currentUser: FirebaseUser? get() = auth.currentUser
 
+//    val getCurrentUserEmail: String? = auth.currentUser?.email
+
+
     val currentUserIdFlow: Flow<String?>
         get() = callbackFlow {
             val listener = FirebaseAuth.AuthStateListener { _ -> this.trySend(currentUser?.uid) }

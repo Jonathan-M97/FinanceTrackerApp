@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,13 +49,15 @@ fun SettingsScreen(
         openDashboard()
     } else {
         val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
+        val userEmail by viewModel.userEmail.collectAsStateWithLifecycle()
 
         SettingsScreenContent(
             loadCurrentUser = viewModel::loadCurrentUser,
             openSignInScreen = openSignInScreen,
             signOut = viewModel::signOut,
             deleteAccount = viewModel::deleteAccount,
-            isAnonymous = isAnonymous
+            isAnonymous = isAnonymous,
+            userEmail = userEmail
         )
     }
 }
@@ -66,7 +69,8 @@ fun SettingsScreenContent(
     openSignInScreen: () -> Unit,
     signOut: () -> Unit,
     deleteAccount: () -> Unit,
-    isAnonymous: Boolean
+    isAnonymous: Boolean,
+    userEmail: String?
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
@@ -102,6 +106,15 @@ fun SettingsScreenContent(
                     }
                 )
             } else {
+                userEmail?.let {
+                    Text(
+                        text = "Signed in as: $it",
+                        modifier = Modifier.padding(start = 12.dp, bottom = 12.dp),
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp
+                    )
+                }
+
                 StandardButton(
                     label = R.string.sign_out,
                     onButtonClick = {
@@ -178,7 +191,8 @@ fun SettingsScreenPreview() {
             openSignInScreen = {},
             signOut = {},
             deleteAccount = {},
-            isAnonymous = false
+            isAnonymous = false,
+            userEmail = "jon.doe@email.com"
         )
     }
 }

@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
                     ) { innerPadding ->
                         NavHost(
                             navController = navController,
-                            startDestination = LoginRoute,
+                            startDestination = DashboardRoute,
                             modifier = Modifier.padding(innerPadding)
                         ) {
 
