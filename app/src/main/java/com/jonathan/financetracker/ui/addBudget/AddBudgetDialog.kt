@@ -1,4 +1,4 @@
-package com.jonathan.financetracker.ui.components
+package com.jonathan.financetracker.ui.addBudget
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

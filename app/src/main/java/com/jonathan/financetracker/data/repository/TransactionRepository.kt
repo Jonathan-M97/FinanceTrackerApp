@@ -11,4 +11,13 @@ class TransactionRepository @Inject constructor(
     fun getTransactions(currentUserIdFlow: Flow<String?>): Flow<List<Transaction>> {
         return transactionRemoteDataSource.getTransactions(currentUserIdFlow)
     }
+
+    suspend fun getTransaction(itemId: String): Transaction? {
+        return transactionRemoteDataSource.getTransaction(itemId)
+    }
+
+    suspend fun create(transaction: Transaction): String {
+        return transactionRemoteDataSource.create(transaction)
+    }
+
 }

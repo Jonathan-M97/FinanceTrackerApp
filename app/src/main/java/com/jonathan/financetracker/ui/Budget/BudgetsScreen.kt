@@ -14,7 +14,7 @@ import com.google.firebase.firestore.firestore
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.data.addBudgetToFirestore
-import com.jonathan.financetracker.ui.components.AddBudgetDialog
+import com.jonathan.financetracker.ui.addBudget.AddBudgetDialog
 import com.jonathan.financetracker.ui.components.BudgetItem
 import kotlinx.coroutines.tasks.await
 

@@ -15,17 +15,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.ui.Dashboard.DashboardRoute
 import com.jonathan.financetracker.ui.Dashboard.DashboardScreen
 import com.jonathan.financetracker.ui.ExamplePage
 import com.jonathan.financetracker.ui.ExampleScreen
+import com.jonathan.financetracker.ui.addtransaction.AddTransactionRoute
+import com.jonathan.financetracker.ui.addtransaction.AddTransactionScreen
 import com.jonathan.financetracker.ui.settings.SettingsRoute
 import com.jonathan.financetracker.ui.settings.SettingsScreen
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
@@ -44,17 +43,6 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val snackbarHostState = remember { SnackbarHostState() }
             val navController = rememberNavController()
-            val auth = Firebase.auth
-            
-            val onSignOut: () -> Unit = {
-                auth.signOut()
-                navController.navigate(ExamplePage) {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        inclusive = true
-                    }
-                    launchSingleTop = true
-                }
-            }
 
             FinanceTrackerTheme {
                 Surface(
@@ -77,6 +65,18 @@ class MainActivity : ComponentActivity() {
                             composable<DashboardRoute> { DashboardScreen(
                                 openSettingsScreen = {
                                     navController.navigate(SettingsRoute) { launchSingleTop = true }
+                                },
+                                openAddTransactionScreen = { itemId ->
+                                    navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
+                                }
+                            ) }
+                            composable<AddTransactionRoute> { AddTransactionScreen(
+                                openDashboard = {
+                                    navController.navigate(DashboardRoute) { launchSingleTop = true }
+                                },
+                                showErrorSnackbar = { errorMessage ->
+                                    val message = getErrorMessage(errorMessage)
+                                    scope.launch { snackbarHostState.showSnackbar(message) }
                                 }
                             ) }
                             composable<SettingsRoute> { SettingsScreen(
