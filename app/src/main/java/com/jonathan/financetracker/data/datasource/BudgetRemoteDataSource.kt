@@ -1,20 +1,21 @@
 package com.jonathan.financetracker.data.datasource
 
+
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.dataObjects
 import com.google.firebase.firestore.toObject
-import com.jonathan.financetracker.data.model.Transaction
+import com.jonathan.financetracker.data.model.Budget
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class TransactionRemoteDataSource @Inject constructor(
+class BudgetRemoteDataSource @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getTransactions(currentUserIdFlow: Flow<String?>): Flow<List<Transaction>> {
+    fun getBudgets(currentUserIdFlow: Flow<String?>): Flow<List<Budget>> {
         return currentUserIdFlow.flatMapLatest { ownerId ->
             firestore
                 .collection(TRANSACTION_COLLECTION)
@@ -23,7 +24,7 @@ class TransactionRemoteDataSource @Inject constructor(
         }
     }
 
-    suspend fun getTransaction(itemId: String): Transaction? {
+    suspend fun getBudget(itemId: String): Budget? {
         return firestore
             .collection(TRANSACTION_COLLECTION)
             .document(itemId)
@@ -32,10 +33,10 @@ class TransactionRemoteDataSource @Inject constructor(
             .toObject()
     }
 
-    suspend fun create(transaction: Transaction): String {
+    suspend fun create(budget: Budget): String {
         return firestore
             .collection(TRANSACTION_COLLECTION)
-            .add(transaction)
+            .add(budget)
             .await()
             .id
     }
@@ -43,6 +44,6 @@ class TransactionRemoteDataSource @Inject constructor(
 
     companion object {
         private const val OWNER_ID_FIELD = "ownerId"
-        private const val TRANSACTION_COLLECTION = "transactions"
+        private const val TRANSACTION_COLLECTION = "budgets"
     }
 }

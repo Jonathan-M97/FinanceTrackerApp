@@ -19,6 +19,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jonathan.financetracker.data.model.ErrorMessage
+import com.jonathan.financetracker.ui.Budget.BudgetRoute
+import com.jonathan.financetracker.ui.Budget.BudgetsScreen
 import com.jonathan.financetracker.ui.Dashboard.DashboardRoute
 import com.jonathan.financetracker.ui.Dashboard.DashboardScreen
 import com.jonathan.financetracker.ui.ExamplePage
@@ -66,6 +68,9 @@ class MainActivity : ComponentActivity() {
                                 openSettingsScreen = {
                                     navController.navigate(SettingsRoute) { launchSingleTop = true }
                                 },
+                                openBudgetScreen = {
+                                    navController.navigate(BudgetRoute) { launchSingleTop = true }
+                                },
                                 openAddTransactionScreen = { itemId ->
                                     navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
                                 }
@@ -77,6 +82,17 @@ class MainActivity : ComponentActivity() {
                                 showErrorSnackbar = { errorMessage ->
                                     val message = getErrorMessage(errorMessage)
                                     scope.launch { snackbarHostState.showSnackbar(message) }
+                                }
+                            ) }
+                            composable<BudgetRoute> { BudgetsScreen(
+                                openDashboard = {
+                                    navController.navigate(DashboardRoute) { launchSingleTop = true }
+                                },
+                                openSettingsScreen = {
+                                    navController.navigate(SettingsRoute) { launchSingleTop = true }
+                                },
+                                openAddBudgetScreen = { itemId ->
+                                    navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
                                 }
                             ) }
                             composable<SettingsRoute> { SettingsScreen(

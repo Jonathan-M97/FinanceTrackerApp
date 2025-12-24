@@ -27,9 +27,6 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +46,7 @@ object DashboardRoute
 @Composable
 fun DashboardScreen(
     openSettingsScreen: () -> Unit,
+    openBudgetScreen: () -> Unit,
     openAddTransactionScreen: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel()
@@ -67,6 +65,7 @@ fun DashboardScreen(
         DashboardScreenContent(
             transactions = transactions.value,
             openSettingsScreen = openSettingsScreen,
+            openBudgetScreen = openBudgetScreen,
             openAddTransactionScreen = openAddTransactionScreen,
             isAnonymous = isAnonymous,
 //            updateItem = viewModel::updateItem,
@@ -88,6 +87,8 @@ fun DashboardScreenContent(
     transactions: List<Transaction>,
 
     openSettingsScreen: () -> Unit,
+
+    openBudgetScreen: () -> Unit,
 
     openAddTransactionScreen: (String) -> Unit,
 
@@ -138,7 +139,7 @@ fun DashboardScreenContent(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
 
-                Button(onClick = { /* todo: add budgets route*/ }) {
+                Button(onClick = { openBudgetScreen() }) {
                     Text("Budgets")
                 }
             }
@@ -211,6 +212,7 @@ fun DashboardScreenPreview() {
     FinanceTrackerTheme {
         DashboardScreen(
             openSettingsScreen = {},
+            openBudgetScreen = {},
             openAddTransactionScreen = {""}
         )
 
