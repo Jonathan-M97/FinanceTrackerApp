@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,8 +40,6 @@ import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.data.addBudgetToFirestore
 import com.jonathan.financetracker.ui.Dashboard.DashboardScreen
 import com.jonathan.financetracker.ui.Dashboard.TransactionItem
-import com.jonathan.financetracker.ui.addBudget.AddBudgetDialog
-import com.jonathan.financetracker.ui.components.BudgetItem
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
@@ -101,7 +102,13 @@ fun BudgetsScreenContent(
                 action = openSettingsScreen,
                 scrollBehavior = scrollBehavior
             )
-        }
+        },
+//                // Add a transaction button todo
+//                floatingActionButton = {
+//            FloatingActionButton(onClick = { openBudgetScreen("") }) {
+//                Icon(Icons.Filled.Add, "Add Transaction")
+//            }
+//        }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)){
             // checks if using guest account or not and displays message accordingly

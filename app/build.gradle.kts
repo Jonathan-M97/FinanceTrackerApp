@@ -53,6 +53,7 @@ dependencies {
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.compose.material3)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -76,6 +77,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation ("com.google.android.material:material:1.13.0")
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Firebase - Import the Bill of Materials (BoM)
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))

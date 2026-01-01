@@ -25,6 +25,8 @@ import com.jonathan.financetracker.ui.Dashboard.DashboardRoute
 import com.jonathan.financetracker.ui.Dashboard.DashboardScreen
 import com.jonathan.financetracker.ui.ExamplePage
 import com.jonathan.financetracker.ui.ExampleScreen
+import com.jonathan.financetracker.ui.addBudget.AddBudgetRoute
+import com.jonathan.financetracker.ui.addBudget.AddBudgetScreen
 import com.jonathan.financetracker.ui.addtransaction.AddTransactionRoute
 import com.jonathan.financetracker.ui.addtransaction.AddTransactionScreen
 import com.jonathan.financetracker.ui.settings.SettingsRoute
@@ -76,6 +78,15 @@ class MainActivity : ComponentActivity() {
                                 }
                             ) }
                             composable<AddTransactionRoute> { AddTransactionScreen(
+                                openDashboard = {
+                                    navController.navigate(DashboardRoute) { launchSingleTop = true }
+                                },
+                                showErrorSnackbar = { errorMessage ->
+                                    val message = getErrorMessage(errorMessage)
+                                    scope.launch { snackbarHostState.showSnackbar(message) }
+                                }
+                            ) }
+                            composable<AddBudgetRoute> { AddBudgetScreen(
                                 openDashboard = {
                                     navController.navigate(DashboardRoute) { launchSingleTop = true }
                                 },
