@@ -63,7 +63,7 @@ class AddBudgetViewModel @Inject constructor(
             if (itemId.isBlank()) {
                 budgetRepository.create(newItem)
             } else {
-//                budgetRepository.update(newItem) todo add update function
+//                budgetRepository.update(newItem) todo add update
             }
 
             _navigateDashboard.value = true

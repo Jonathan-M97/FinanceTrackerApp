@@ -103,12 +103,12 @@ fun BudgetsScreenContent(
                 scrollBehavior = scrollBehavior
             )
         },
-//                // Add a transaction button todo
-//                floatingActionButton = {
-//            FloatingActionButton(onClick = { openBudgetScreen("") }) {
-//                Icon(Icons.Filled.Add, "Add Transaction")
-//            }
-//        }
+        // Add a transaction button todo
+        floatingActionButton = {
+            FloatingActionButton(onClick = { openAddBudgetScreen("") }) {
+                Icon(Icons.Filled.Add, "Add Budget")
+            }
+        }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)){
             // checks if using guest account or not and displays message accordingly

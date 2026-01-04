@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,6 +20,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,6 +36,9 @@ import com.jonathan.financetracker.ui.components.CenterTopAppBar
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.StandardButton
 import kotlinx.serialization.Serializable
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import kotlin.text.format
 
 @Serializable
 data class AddTransactionRoute (val itemId: String)
@@ -91,8 +101,27 @@ fun AddTransactionScreenContent(
 //    deleteItem: () -> Unit
 ) {
 
-    val editableItem = remember { mutableStateOf(transactionItem) }
+    val editableItem = remember {
+        // If the transaction date is empty, it\'s a new item, so set today\'s date.
+        val initialDate = if (transactionItem.date.isEmpty()) {
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            LocalDate.now().format(formatter)
+        } else {
+            transactionItem.date
+        }
+        mutableStateOf(transactionItem.copy(date = initialDate))
+    }
+
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val focusRequester = remember { FocusRequester() }
+    val amountTextFieldValue = remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = editableItem.value.amount.toString(),
+                selection = TextRange(editableItem.value.amount.toString().length)
+            )
+        )
+    }
 
 
     Scaffold(
@@ -122,9 +151,27 @@ fun AddTransactionScreenContent(
                 label = { Text("Description") }
             )
             OutlinedTextField(
-                value = editableItem.value.amount.toString(),
-                onValueChange = { editableItem.value = editableItem.value.copy(amount = it.toDoubleOrNull() ?: 0.0) },
-                label = { Text("Amount") }
+                value = amountTextFieldValue.value,
+                onValueChange = { newValue ->
+                    if (newValue.text.matches(Regex("^\\d*\\.?\\d*\$"))) {
+                        amountTextFieldValue.value = newValue
+                        editableItem.value = editableItem.value.copy(
+                            amount = newValue.text.toDoubleOrNull() ?: 0.0
+                        )
+                    }
+                },
+                label = { Text("Amount") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            val text = amountTextFieldValue.value.text
+                            amountTextFieldValue.value = amountTextFieldValue.value.copy(
+                                selection = TextRange(0, text.length)
+                            )
+                        }
+                    }
             )
             OutlinedTextField(
                 value = editableItem.value.date,

@@ -20,4 +20,8 @@ class BudgetRepository @Inject constructor(
         return budgetRemoteDataSource.create(budget)
     }
 
+//    suspend fun update(budget: Budget) {
+//        budgetRemoteDataSource.update(budget)
+//    }
+
 }

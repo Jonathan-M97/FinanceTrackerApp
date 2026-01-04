@@ -18,7 +18,7 @@ class BudgetRemoteDataSource @Inject constructor(
     fun getBudgets(currentUserIdFlow: Flow<String?>): Flow<List<Budget>> {
         return currentUserIdFlow.flatMapLatest { ownerId ->
             firestore
-                .collection(TRANSACTION_COLLECTION)
+                .collection(BUDGET_COLLECTION)
                 .whereEqualTo(OWNER_ID_FIELD, ownerId)
                 .dataObjects()
         }
@@ -26,7 +26,7 @@ class BudgetRemoteDataSource @Inject constructor(
 
     suspend fun getBudget(itemId: String): Budget? {
         return firestore
-            .collection(TRANSACTION_COLLECTION)
+            .collection(BUDGET_COLLECTION)
             .document(itemId)
             .get()
             .await()
@@ -35,15 +35,23 @@ class BudgetRemoteDataSource @Inject constructor(
 
     suspend fun create(budget: Budget): String {
         return firestore
-            .collection(TRANSACTION_COLLECTION)
+            .collection(BUDGET_COLLECTION)
             .add(budget)
             .await()
             .id
     }
 
+//    suspend fun update(budget: Budget) {
+//        firestore
+//            .collection(BUDGET_COLLECTION)
+//            .document(budget.id)
+//            .set(budget)
+//            .await()
+//    }
+
 
     companion object {
         private const val OWNER_ID_FIELD = "ownerId"
-        private const val TRANSACTION_COLLECTION = "budgets"
+        private const val BUDGET_COLLECTION = "budgets"
     }
 }

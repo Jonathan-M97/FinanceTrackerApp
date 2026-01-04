@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(SettingsRoute) { launchSingleTop = true }
                                 },
                                 openAddBudgetScreen = { itemId ->
-                                    navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
+                                    navController.navigate(AddBudgetRoute(itemId)) { launchSingleTop = true }
                                 }
                             ) }
                             composable<SettingsRoute> { SettingsScreen(
