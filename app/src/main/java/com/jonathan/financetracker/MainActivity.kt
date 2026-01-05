@@ -90,6 +90,9 @@ class MainActivity : ComponentActivity() {
                                 openDashboard = {
                                     navController.navigate(DashboardRoute) { launchSingleTop = true }
                                 },
+                                openBudget = {
+                                    navController.navigate(BudgetRoute) { launchSingleTop = true }
+                                },
                                 showErrorSnackbar = { errorMessage ->
                                     val message = getErrorMessage(errorMessage)
                                     scope.launch { snackbarHostState.showSnackbar(message) }

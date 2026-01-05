@@ -25,6 +25,9 @@ class AddBudgetViewModel @Inject constructor(
     val navigateDashboard: StateFlow<Boolean>
         get() = _navigateDashboard.asStateFlow()
 
+    private val _navigateBudget = MutableStateFlow(false)
+    val navigateBudget: StateFlow<Boolean> = _navigateBudget.asStateFlow()
+
     private val addBudgetRouteArgs = savedStateHandle.toRoute<AddBudgetRoute>()
     private val itemId: String = addBudgetRouteArgs.itemId
 
@@ -63,12 +66,31 @@ class AddBudgetViewModel @Inject constructor(
             if (itemId.isBlank()) {
                 budgetRepository.create(newItem)
             } else {
-//                budgetRepository.update(newItem) todo add update
+                budgetRepository.update(newItem)
             }
 
-            _navigateDashboard.value = true
+            _navigateBudget.value = true
         }
 
+    }
+
+    /**
+     * Deletes the current budget item from the repository.
+     */
+    fun deleteItem(
+        item: Budget,
+        showErrorSnackbar: (ErrorMessage) -> Unit
+    ) {
+        // We only proceed if there's a valid item ID, meaning the item is not new.
+        if (itemId.isNotBlank()) {
+            item.id?.let { id -> // Use a safe call ?.let to ensure the id is not null
+                launchCatching {
+                    budgetRepository.delete(id) // Use the non-null 'id' here
+                    // Navigate back to the budget list after deletion is successful.
+                    _navigateBudget.value = true
+                }
+            } ?: showErrorSnackbar(ErrorMessage.IdError(R.string.error_missing_id)) // Optional: Show an error if the id is null
+        }
     }
 
 

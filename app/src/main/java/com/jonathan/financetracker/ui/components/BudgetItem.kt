@@ -1,6 +1,7 @@
 package com.jonathan.financetracker.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -16,10 +17,12 @@ import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 @Composable
 fun BudgetItem(
     budget: Budget,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onItemClick: (String) -> Unit
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
+            .clickable { budget.id?.let { onItemClick(it) } }
             .background(MaterialTheme.colorScheme.primaryContainer)
             .padding(16.dp)
 
@@ -44,6 +47,8 @@ fun BudgetItem(
 fun BudgetItemPreview() {
     FinanceTrackerTheme {
         BudgetItem(
-            Budget("Groceries", 200.00))
+            budget = Budget(id = "asdf", category = "Groceries", amount = 200.00),
+            onItemClick = {}
+        )
     }
 }

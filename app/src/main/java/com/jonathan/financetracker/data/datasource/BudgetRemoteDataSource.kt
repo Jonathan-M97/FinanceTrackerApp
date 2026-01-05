@@ -41,13 +41,25 @@ class BudgetRemoteDataSource @Inject constructor(
             .id
     }
 
-//    suspend fun update(budget: Budget) {
-//        firestore
-//            .collection(BUDGET_COLLECTION)
-//            .document(budget.id)
-//            .set(budget)
-//            .await()
-//    }
+    suspend fun update(budget: Budget) {
+        firestore
+            .collection(BUDGET_COLLECTION)
+            .document(budget.id!!)
+            .set(budget)
+            .await()
+    }
+
+    /**
+     * Deletes a budget document from the Firestore database.
+     * @param budgetId The ID of the budget to delete.
+     */
+    suspend fun delete(budgetId: String) {
+        firestore
+            .collection(BUDGET_COLLECTION)
+            .document(budgetId)
+            .delete()
+            .await()
+    }
 
 
     companion object {

@@ -40,6 +40,7 @@ import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.data.addBudgetToFirestore
 import com.jonathan.financetracker.ui.Dashboard.DashboardScreen
 import com.jonathan.financetracker.ui.Dashboard.TransactionItem
+import com.jonathan.financetracker.ui.components.BudgetItem
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
@@ -140,42 +141,13 @@ fun BudgetsScreenContent(
             ) {
                 items(budgets) { budget ->
                     BudgetItem(
-                        budget = budget
+                        budget = budget,
+                        onItemClick = openAddBudgetScreen
                     )
                 }
             }
 
 
-        }
-
-    }
-}
-
-@Composable
-fun BudgetItem(
-    budget: Budget,
-    modifier: Modifier = Modifier
-) {
-    Card (
-        modifier = modifier
-    ) {
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .padding(16.dp)
-
-        ) {
-            Text(
-                text = budget.category,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Text(
-                text = budget.amount.toString(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
         }
 
     }
@@ -187,8 +159,8 @@ fun BudgetScreenPreview() {
     FinanceTrackerTheme {
         BudgetsScreen(
             openDashboard = {},
-            openSettingsScreen = {""},
-            openAddBudgetScreen = {""}
+            openSettingsScreen = {},
+            openAddBudgetScreen = {}
         )
 
     }

@@ -51,15 +51,19 @@ data class AddBudgetRoute (val itemId: String)
 @Composable
 fun AddBudgetScreen(
     openDashboard: () -> Unit,
+    openBudget: () -> Unit,
     showErrorSnackbar: (ErrorMessage) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AddBudgetViewModel = hiltViewModel()
 ) {
 
     val navigateDashboard by viewModel.navigateDashboard.collectAsStateWithLifecycle()
+    val navigateBudget by viewModel.navigateBudget.collectAsStateWithLifecycle()
 
     if (navigateDashboard) {
         openDashboard()
+    } else if (navigateBudget){
+        openBudget()
     } else {
         val budgetItem by viewModel.budgetItem.collectAsStateWithLifecycle()
 
@@ -67,7 +71,7 @@ fun AddBudgetScreen(
             budgetItem = budgetItem,
             showErrorSnackbar = showErrorSnackbar,
             saveItem = viewModel::saveItem,
-//            delete = viewModel::delete, todo add delete function in view model
+            deleteItem = viewModel::deleteItem,
             loadItem = viewModel::loadItem
         )
     }
@@ -78,7 +82,7 @@ fun AddBudgetScreen(
     budgetItem: Budget?,
     showErrorSnackbar: (ErrorMessage) -> Unit,
     saveItem: (Budget, (ErrorMessage) -> Unit) -> Unit,
-//    delete: () -> Unit, todo add delete function
+    deleteItem: (Budget, (ErrorMessage) -> Unit) -> Unit,
     loadItem: () -> Unit
 ) {
     if (budgetItem == null) {
@@ -87,8 +91,8 @@ fun AddBudgetScreen(
         AddBudgetScreenContent(
             budgetItem = budgetItem,
             showErrorSnackbar = showErrorSnackbar,
-            saveItem = saveItem
-//            deleteItem = deleteItem
+            saveItem = saveItem,
+            deleteItem = deleteItem
         )
     }
 
@@ -102,7 +106,7 @@ fun AddBudgetScreenContent(
     budgetItem: Budget,
     showErrorSnackbar: (ErrorMessage) -> Unit,
     saveItem: (Budget, (ErrorMessage) -> Unit) -> Unit,
-//    deleteItem: () -> Unit
+    deleteItem: (Budget, (ErrorMessage) -> Unit) -> Unit
 ) {
     val editableItem = remember { mutableStateOf(budgetItem) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -119,7 +123,7 @@ fun AddBudgetScreenContent(
     Scaffold(
         topBar = {
             CenterTopAppBar(
-                title = "Add Budget",
+                title = if (budgetItem.id == null) "Add Budget" else "Edit Budget",
                 icon = Icons.Filled.Settings,
                 iconDescription = "Settings",
                 action = {
@@ -136,7 +140,7 @@ fun AddBudgetScreenContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Add New Budget", style = MaterialTheme.typography.titleLarge)
+            Text(if (budgetItem.id == null) "Add New Budget" else "Edit Budget", style = MaterialTheme.typography.titleLarge)
             OutlinedTextField(
                 value = editableItem.value.category,
                 onValueChange = { editableItem.value = editableItem.value.copy(category = it) },
@@ -145,7 +149,7 @@ fun AddBudgetScreenContent(
             OutlinedTextField(
                 value = amountTextFieldValue.value,
                 onValueChange = { newValue ->
-                    if (newValue.text.matches(Regex("^\\d*\\.?\\d*\$"))) {
+                    if (newValue.text.matches(Regex("^\\d*\\.?\\d*$"))) {
                         amountTextFieldValue.value = newValue
                         editableItem.value = editableItem.value.copy(
                             amount = newValue.text.toDoubleOrNull() ?: 0.0
@@ -167,11 +171,21 @@ fun AddBudgetScreenContent(
             )
 
             StandardButton(
-                label = R.string.add_budget,
+                label = if (budgetItem.id == null) R.string.add_budget else R.string.update_budget,
                 onButtonClick = {
                     saveItem(editableItem.value, showErrorSnackbar)
                 }
             )
+
+            // This button will only be composed if the budgetItem.id is not null
+            if (budgetItem.id != null) {
+                StandardButton(
+                    label = R.string.delete_budget,
+                    onButtonClick = {
+                        deleteItem(editableItem.value, showErrorSnackbar)
+                    }
+                )
+            }
         }
     }
 }

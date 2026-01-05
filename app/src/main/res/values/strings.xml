@@ -6,6 +6,9 @@
     <!-- addTransaction Screen -->
     <string name="add_transaction">Add Transaction</string>
     <string name="add_budget">Add Budget</string>
+    <string name="update_budget">Update Budget</string>
+    <string name="delete_budget">Delete Budget</string>
+
 
 
 
@@ -25,5 +28,6 @@
     <string name="error_missing_owner_id">Missing owner ID</string>
     <string name="error_missing_description">Missing description</string>
     <string name="error_missing_category">Missing category</string>
+    <string name="error_missing_id">Missing ID in order to delete</string>
 
 </resources>
