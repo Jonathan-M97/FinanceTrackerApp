@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -30,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
+import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.data.model.Transaction
 import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
@@ -57,9 +61,12 @@ fun AddTransactionScreen(
         openDashboard()
     } else {
         val transactionItem by viewModel.transactionItem.collectAsStateWithLifecycle()
+        val budgetList by viewModel.budgetList.collectAsStateWithLifecycle()
+
 
         AddTransactionScreen(
             transactionItem = transactionItem,
+            budgetList = budgetList,
             showErrorSnackbar = showErrorSnackbar,
             saveItem = viewModel::saveItem,
 //            delete = viewModel::delete, todo add delete function in viewmodel
@@ -71,6 +78,7 @@ fun AddTransactionScreen(
 @Composable
 fun AddTransactionScreen(
     transactionItem: Transaction?,
+    budgetList: List<String>,
     showErrorSnackbar: (ErrorMessage) -> Unit,
     saveItem: (Transaction, (ErrorMessage) -> Unit) -> Unit,
 //    delete: () -> Unit, todo add delete function
@@ -81,6 +89,7 @@ fun AddTransactionScreen(
     } else {
         AddTransactionScreenContent(
             transactionItem = transactionItem,
+            budgetList = budgetList,
             showErrorSnackbar = showErrorSnackbar,
             saveItem = saveItem,
 //            deleteItem = deleteItem
@@ -96,6 +105,7 @@ fun AddTransactionScreen(
 @Composable
 fun AddTransactionScreenContent(
     transactionItem: Transaction,
+    budgetList: List<String>,
     showErrorSnackbar: (ErrorMessage) -> Unit,
     saveItem: (Transaction, (ErrorMessage) -> Unit) -> Unit,
 //    deleteItem: () -> Unit
@@ -122,6 +132,9 @@ fun AddTransactionScreenContent(
             )
         )
     }
+
+    // State for the dropdown menu
+    val isTypeDropdownExpanded = remember { mutableStateOf(false) }
 
 
     Scaffold(
@@ -178,11 +191,36 @@ fun AddTransactionScreenContent(
                 onValueChange = { editableItem.value = editableItem.value.copy(date = it) },
                 label = { Text("Date") }
             )
-            OutlinedTextField(
-                value = editableItem.value.type,
-                onValueChange = { editableItem.value = editableItem.value.copy(type = it) },
-                label = { Text("type") }
-            )
+
+            ExposedDropdownMenuBox(
+                expanded = isTypeDropdownExpanded.value,
+                onExpandedChange = { isTypeDropdownExpanded.value = !isTypeDropdownExpanded.value }
+            ) {
+                OutlinedTextField(
+                    value = editableItem.value.type,
+                    onValueChange = {}, // Keep empty to prevent manual typing
+                    readOnly = true, // Make it non-editable
+                    label = { Text("Type") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isTypeDropdownExpanded.value)
+                    },
+                    modifier = Modifier.menuAnchor() // Important for accessibility
+                )
+                ExposedDropdownMenu(
+                    expanded = isTypeDropdownExpanded.value,
+                    onDismissRequest = { isTypeDropdownExpanded.value = false }
+                ) {
+                    budgetList.forEach { budget ->
+                        DropdownMenuItem(
+                            text = { Text(budget) },
+                            onClick = {
+                                editableItem.value = editableItem.value.copy(type = budget)
+                                isTypeDropdownExpanded.value = false
+                            }
+                        )
+                    }
+                }
+            }
 
             StandardButton(
                 label = R.string.add_transaction,

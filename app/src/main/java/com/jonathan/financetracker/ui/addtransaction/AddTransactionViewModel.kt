@@ -1,17 +1,22 @@
 package com.jonathan.financetracker.ui.addtransaction
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.jonathan.financetracker.MainViewModel
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.data.model.Transaction
 import com.jonathan.financetracker.data.repository.AuthRepository
+import com.jonathan.financetracker.data.repository.BudgetRepository
 import com.jonathan.financetracker.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,7 +25,8 @@ class AddTransactionViewModel @Inject constructor(
 
     savedStateHandle: SavedStateHandle,
     private val authRepository: AuthRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val budgetsRepository: BudgetRepository,
 
 ) : MainViewModel() {
     private val _navigateDashboard = MutableStateFlow(false)
@@ -36,6 +42,19 @@ class AddTransactionViewModel @Inject constructor(
         get() = _transactionItem.asStateFlow()
 
 
+    val budgetList: StateFlow<List<String>> =
+        budgetsRepository.getBudgets(authRepository.currentUserIdFlow)
+            .map { budgets -> budgets.map { it.category } } // Convert List<Budget> to List<String>
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000L),
+                initialValue = emptyList()
+            )
+
+
+    init {
+        loadItem()
+    }
 
     fun loadItem() {
         launchCatching {

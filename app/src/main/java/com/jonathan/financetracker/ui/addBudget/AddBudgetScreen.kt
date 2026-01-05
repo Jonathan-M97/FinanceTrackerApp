@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -26,6 +27,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -99,6 +106,15 @@ fun AddBudgetScreenContent(
 ) {
     val editableItem = remember { mutableStateOf(budgetItem) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val focusRequester = remember { FocusRequester() }
+    val amountTextFieldValue = remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = editableItem.value.amount.toString(),
+                selection = TextRange(editableItem.value.amount.toString().length)
+            )
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -127,12 +143,27 @@ fun AddBudgetScreenContent(
                 label = { Text("Category") }
             )
             OutlinedTextField(
-                value = editableItem.value.amount.toString(),
-                onValueChange = {
-                    editableItem.value =
-                        editableItem.value.copy(amount = it.toDoubleOrNull() ?: 0.0)
+                value = amountTextFieldValue.value,
+                onValueChange = { newValue ->
+                    if (newValue.text.matches(Regex("^\\d*\\.?\\d*\$"))) {
+                        amountTextFieldValue.value = newValue
+                        editableItem.value = editableItem.value.copy(
+                            amount = newValue.text.toDoubleOrNull() ?: 0.0
+                        )
+                    }
                 },
-                label = { Text("Amount") }
+                label = { Text("Amount") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            val text = amountTextFieldValue.value.text
+                            amountTextFieldValue.value = amountTextFieldValue.value.copy(
+                                selection = TextRange(0, text.length)
+                            )
+                        }
+                    }
             )
 
             StandardButton(
