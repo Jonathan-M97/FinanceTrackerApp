@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Transaction
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
+import com.jonathan.financetracker.ui.components.TransactionItem
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 import kotlinx.serialization.Serializable
@@ -68,7 +69,6 @@ fun DashboardScreen(
             openBudgetScreen = openBudgetScreen,
             openAddTransactionScreen = openAddTransactionScreen,
             isAnonymous = isAnonymous,
-//            updateItem = viewModel::updateItem,
             modifier = modifier
         )
 
@@ -85,17 +85,10 @@ fun DashboardScreen(
 @Composable
 fun DashboardScreenContent(
     transactions: List<Transaction>,
-
     openSettingsScreen: () -> Unit,
-
     openBudgetScreen: () -> Unit,
-
     openAddTransactionScreen: (String) -> Unit,
-
     isAnonymous: Boolean,
-
-//    updateItem: (Transaction) -> Unit
-
     modifier: Modifier = Modifier
 ) {
 
@@ -111,7 +104,7 @@ fun DashboardScreenContent(
                 scrollBehavior = scrollBehavior
             )
         },
-        // Add a transaction button
+
         floatingActionButton = {
             FloatingActionButton(onClick = { openAddTransactionScreen("") }) {
                 Icon(Icons.Filled.Add, "Add Transaction")
@@ -151,7 +144,8 @@ fun DashboardScreenContent(
             ) {
                 items(transactions) { transaction ->
                     TransactionItem(
-                        transaction = transaction
+                        transaction = transaction,
+                        onItemClick = openAddTransactionScreen
                     )
                 }
             }
@@ -159,52 +153,7 @@ fun DashboardScreenContent(
     }
 }
 
-@Composable
-fun TransactionItem(
-    transaction: Transaction,
-    modifier: Modifier = Modifier
-) {
 
-    Card(
-        modifier = modifier,
-    ) {
-        Column(
-            modifier = Modifier
-                .animateContentSize(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    )
-                )
-                .background(MaterialTheme.colorScheme.primaryContainer),
-        ) {
-            Row (
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(dimensionResource(R.dimen.padding_small)),
-                horizontalArrangement = Arrangement.SpaceBetween
-
-            ) {
-                Text (
-                    text = transaction.date,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text (
-                    text = transaction.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text (
-                    text = transaction.amount.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-
-            }
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable

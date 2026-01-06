@@ -20,4 +20,13 @@ class TransactionRepository @Inject constructor(
         return transactionRemoteDataSource.create(transaction)
     }
 
+    suspend fun update(transaction: Transaction) {
+        transactionRemoteDataSource.update(transaction)
+    }
+
+    suspend fun delete(transactionId: String) {
+        transactionRemoteDataSource.delete(transactionId)
+    }
+
+
 }

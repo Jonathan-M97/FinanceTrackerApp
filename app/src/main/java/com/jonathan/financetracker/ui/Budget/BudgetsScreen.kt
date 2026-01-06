@@ -1,6 +1,5 @@
 package com.jonathan.financetracker.ui.Budget
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,11 +11,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -24,27 +21,18 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.firebase.Firebase
-import com.google.firebase.app
-import com.google.firebase.firestore.firestore
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Budget
-import com.jonathan.financetracker.data.addBudgetToFirestore
-import com.jonathan.financetracker.ui.Dashboard.DashboardScreen
-import com.jonathan.financetracker.ui.Dashboard.TransactionItem
 import com.jonathan.financetracker.ui.components.BudgetItem
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
-import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -104,7 +92,7 @@ fun BudgetsScreenContent(
                 scrollBehavior = scrollBehavior
             )
         },
-        // Add a transaction button todo
+
         floatingActionButton = {
             FloatingActionButton(onClick = { openAddBudgetScreen("") }) {
                 Icon(Icons.Filled.Add, "Add Budget")
@@ -123,7 +111,7 @@ fun BudgetsScreenContent(
                 )
             }
 
-            // button to switch to budgets
+            // button to switch to Transaction
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -166,45 +154,3 @@ fun BudgetScreenPreview() {
     }
 }
 
-
-//@Composable
-//fun BudgetsScreen(
-//    showAddBudgetDialog: Boolean,
-//    refreshKey: Int,
-//    onDialogDismiss: () -> Unit,
-//    onDialogConfirm: () -> Unit,
-//    modifier: Modifier = Modifier
-//) {
-////    var showDialog by remember { mutableStateOf(false) }
-////    var budgets by remember { mutableStateOf<List<Budget>>(emptyList()) }
-//
-//    val budgetState = produceState<List<Budget>>(initialValue = emptyList(), key1 = refreshKey) {
-//        val firebaseApp = Firebase.app
-//        val db = Firebase.firestore(firebaseApp, "financetracker")
-//        value = db.collection("budgets").get().await().toObjects(Budget::class.java)
-//    }
-//
-//
-//
-//
-//    if (showAddBudgetDialog) {
-//        AddBudgetDialog(
-//            onDismiss = onDialogDismiss,
-//            onConfirm = { newBudget ->
-//                addBudgetToFirestore(newBudget)
-//                onDialogConfirm()
-//            }
-//        )
-//    }
-//
-//    LazyColumn(
-//        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-//        modifier = modifier.padding(horizontal = dimensionResource(R.dimen.padding_small))
-//    ) {
-//        items(budgetState.value) { budget ->
-//            BudgetItem(
-//                budget = budget
-//            )
-//        }
-//    }
-//}

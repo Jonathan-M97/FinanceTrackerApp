@@ -87,7 +87,7 @@ class AddTransactionViewModel @Inject constructor(
             if (itemId.isBlank()) {
                 transactionRepository.create(newItem)
             } else {
-//                transactionRepository.update(newItem) todo add update function
+                transactionRepository.update(newItem)
 
             }
 
@@ -95,7 +95,17 @@ class AddTransactionViewModel @Inject constructor(
         }
     }
 
-
-
-
+    fun deleteItem(
+        item: Transaction,
+        showErrorSnackbar: (ErrorMessage) -> Unit
+    ) {
+        if (itemId.isNotBlank()) {
+            item.id?.let { id ->
+                launchCatching {
+                    transactionRepository.delete(id)
+                    _navigateDashboard.value = true
+                }
+            } ?: showErrorSnackbar(ErrorMessage.IdError(R.string.error_missing_id))
+        }
+    }
 }

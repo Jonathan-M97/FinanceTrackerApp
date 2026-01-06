@@ -38,10 +38,4 @@ class DashboardViewModel @Inject constructor(
             _isLoadingUser.value = false
         }
     }
-//    fun updateItem(item: Transaction) {
-//        launchCatching {
-//            TransactionRepository.update(item)
-//        }
-//    }
-
 }

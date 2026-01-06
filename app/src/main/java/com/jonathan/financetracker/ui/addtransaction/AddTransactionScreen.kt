@@ -69,7 +69,7 @@ fun AddTransactionScreen(
             budgetList = budgetList,
             showErrorSnackbar = showErrorSnackbar,
             saveItem = viewModel::saveItem,
-//            delete = viewModel::delete, todo add delete function in viewmodel
+            deleteItem = viewModel::deleteItem,
             loadItem = viewModel::loadItem
         )
     }
@@ -81,7 +81,7 @@ fun AddTransactionScreen(
     budgetList: List<String>,
     showErrorSnackbar: (ErrorMessage) -> Unit,
     saveItem: (Transaction, (ErrorMessage) -> Unit) -> Unit,
-//    delete: () -> Unit, todo add delete function
+    deleteItem: (Transaction, (ErrorMessage) -> Unit) -> Unit,
     loadItem: () -> Unit
 ) {
     if (transactionItem == null) {
@@ -92,7 +92,7 @@ fun AddTransactionScreen(
             budgetList = budgetList,
             showErrorSnackbar = showErrorSnackbar,
             saveItem = saveItem,
-//            deleteItem = deleteItem
+            deleteItem = deleteItem
         )
     }
 
@@ -108,7 +108,7 @@ fun AddTransactionScreenContent(
     budgetList: List<String>,
     showErrorSnackbar: (ErrorMessage) -> Unit,
     saveItem: (Transaction, (ErrorMessage) -> Unit) -> Unit,
-//    deleteItem: () -> Unit
+    deleteItem: (Transaction, (ErrorMessage) -> Unit) -> Unit
 ) {
 
     val editableItem = remember {
@@ -223,11 +223,21 @@ fun AddTransactionScreenContent(
             }
 
             StandardButton(
-                label = R.string.add_transaction,
+                label = if (transactionItem.id == null) R.string.add_transaction else R.string.update_transaction,
                 onButtonClick = {
                     saveItem(editableItem.value, showErrorSnackbar)
                 }
             )
+
+            // This button will only be composed if the budgetItem.id is not null
+            if (transactionItem.id != null) {
+                StandardButton(
+                    label = R.string.delete_transaction,
+                    onButtonClick = {
+                        deleteItem(editableItem.value, showErrorSnackbar)
+                    }
+                )
+            }
         }
     }
 }

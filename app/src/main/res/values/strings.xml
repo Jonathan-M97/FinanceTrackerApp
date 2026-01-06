@@ -29,5 +29,7 @@
     <string name="error_missing_description">Missing description</string>
     <string name="error_missing_category">Missing category</string>
     <string name="error_missing_id">Missing ID in order to delete</string>
+    <string name="update_transaction">Update Transaction</string>
+    <string name="delete_transaction">Delete Transaction</string>
 
 </resources>

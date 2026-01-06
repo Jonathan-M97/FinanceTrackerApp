@@ -40,6 +40,22 @@ class TransactionRemoteDataSource @Inject constructor(
             .id
     }
 
+    suspend fun update(transaction: Transaction) {
+        firestore
+            .collection(TRANSACTION_COLLECTION)
+            .document(transaction.id!!)
+            .set(transaction)
+            .await()
+    }
+
+    suspend fun delete(transactionId: String) {
+        firestore
+            .collection(TRANSACTION_COLLECTION)
+            .document(transactionId)
+            .delete()
+            .await()
+    }
+
 
     companion object {
         private const val OWNER_ID_FIELD = "ownerId"
