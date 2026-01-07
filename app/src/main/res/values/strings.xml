@@ -31,5 +31,6 @@
     <string name="error_missing_id">Missing ID in order to delete</string>
     <string name="update_transaction">Update Transaction</string>
     <string name="delete_transaction">Delete Transaction</string>
+    <string name="error_missing_fields">Please fill in all fields.</string>
 
 </resources>

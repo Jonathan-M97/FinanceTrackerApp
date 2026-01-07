@@ -1,13 +1,16 @@
 package com.jonathan.financetracker.data.datasource
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.dataObjects
 import com.google.firebase.firestore.toObject
+import com.google.firebase.firestore.toObjects
 import com.jonathan.financetracker.data.model.Transaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.tasks.await
+import java.util.Calendar
 import javax.inject.Inject
 
 class TransactionRemoteDataSource @Inject constructor(
@@ -19,6 +22,7 @@ class TransactionRemoteDataSource @Inject constructor(
             firestore
                 .collection(TRANSACTION_COLLECTION)
                 .whereEqualTo(OWNER_ID_FIELD, ownerId)
+                .orderBy("date", Query.Direction.DESCENDING)
                 .dataObjects()
         }
     }
@@ -29,7 +33,7 @@ class TransactionRemoteDataSource @Inject constructor(
             .document(itemId)
             .get()
             .await()
-            .toObject()
+            .toObject<Transaction>()
     }
 
     suspend fun create(transaction: Transaction): String {
@@ -54,6 +58,26 @@ class TransactionRemoteDataSource @Inject constructor(
             .document(transactionId)
             .delete()
             .await()
+    }
+
+    suspend fun getMonthlySpentAmount(ownerId: String): Map<String, Double> {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        val firstDayOfMonth = calendar.time
+
+        val transactions = firestore
+            .collection(TRANSACTION_COLLECTION)
+            .whereEqualTo(OWNER_ID_FIELD, ownerId)
+            .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
+            .get()
+            .await()
+            .toObjects<Transaction>()
+
+        return transactions
+            .groupBy { it.type ?: "" }
+            .mapValues { (_, transactions) ->
+                transactions.sumOf { it.amount ?: 0.0 }
+            }
     }
 
 

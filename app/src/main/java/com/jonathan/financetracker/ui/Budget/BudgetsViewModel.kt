@@ -3,6 +3,7 @@ package com.jonathan.financetracker.ui.Budget
 import com.jonathan.financetracker.MainViewModel
 import com.jonathan.financetracker.data.repository.AuthRepository
 import com.jonathan.financetracker.data.repository.BudgetRepository
+import com.jonathan.financetracker.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +13,8 @@ import javax.inject.Inject
 @HiltViewModel
 class BudgetsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val budgetsRepository: BudgetRepository
+    private val budgetsRepository: BudgetRepository,
+    private val transactionRepository: TransactionRepository
 ) : MainViewModel() {
 
     private val _isLoadingUser = MutableStateFlow(true)
@@ -23,7 +25,10 @@ class BudgetsViewModel @Inject constructor(
     val isAnonymous: StateFlow<Boolean>
         get() = _isAnonymous.asStateFlow()
 
-    val Budgets = budgetsRepository.getBudgets(authRepository.currentUserIdFlow)
+    private val _spentAmounts = MutableStateFlow<Map<String, Double>>(emptyMap())
+    val spentAmounts: StateFlow<Map<String, Double>> = _spentAmounts.asStateFlow()
+
+    val budgets = budgetsRepository.getBudgets(authRepository.currentUserIdFlow)
 
     fun loadCurrentUser() {
         launchCatching {
@@ -31,8 +36,15 @@ class BudgetsViewModel @Inject constructor(
                 authRepository.createGuestAccount()
             }
 
+            authRepository.currentUser?.uid?.let { loadSpentAmounts(it) }
             _isAnonymous.value = authRepository.currentUser?.isAnonymous == true
             _isLoadingUser.value = false
+        }
+    }
+
+    private fun loadSpentAmounts(userId: String) {
+        launchCatching {
+            _spentAmounts.value = transactionRepository.getMonthlySpentAmount(userId)
         }
     }
 }

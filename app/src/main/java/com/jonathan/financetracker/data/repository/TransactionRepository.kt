@@ -28,5 +28,7 @@ class TransactionRepository @Inject constructor(
         transactionRemoteDataSource.delete(transactionId)
     }
 
-
+    suspend fun getMonthlySpentAmount(ownerId: String): Map<String, Double> {
+        return transactionRemoteDataSource.getMonthlySpentAmount(ownerId)
+    }
 }

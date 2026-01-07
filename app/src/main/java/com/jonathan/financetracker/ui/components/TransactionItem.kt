@@ -14,10 +14,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Transaction
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun TransactionItem(
@@ -25,7 +28,7 @@ fun TransactionItem(
     modifier: Modifier = Modifier,
     onItemClick: (String) -> Unit
 ) {
-
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     Column(
         modifier = Modifier
@@ -46,7 +49,7 @@ fun TransactionItem(
 
         ) {
             Text (
-                text = transaction.date,
+                text = dateFormat.format(transaction.date),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )

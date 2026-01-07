@@ -22,10 +22,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -40,9 +42,9 @@ import com.jonathan.financetracker.ui.components.CenterTopAppBar
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.StandardButton
 import kotlinx.serialization.Serializable
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import kotlin.text.format
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Serializable
 data class AddTransactionRoute (val itemId: String)
@@ -111,20 +113,11 @@ fun AddTransactionScreenContent(
     deleteItem: (Transaction, (ErrorMessage) -> Unit) -> Unit
 ) {
 
-    val editableItem = remember {
-        // If the transaction date is empty, it\'s a new item, so set today\'s date.
-        val initialDate = if (transactionItem.date.isEmpty()) {
-            val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
-            LocalDate.now().format(formatter)
-        } else {
-            transactionItem.date
-        }
-        mutableStateOf(transactionItem.copy(date = initialDate))
-    }
+    val editableItem = remember(transactionItem) { mutableStateOf(transactionItem) }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val focusRequester = remember { FocusRequester() }
-    val amountTextFieldValue = remember {
+    val amountTextFieldValue = remember(transactionItem) {
         mutableStateOf(
             TextFieldValue(
                 text = editableItem.value.amount.toString(),
@@ -136,6 +129,10 @@ fun AddTransactionScreenContent(
     // State for the dropdown menu
     val isTypeDropdownExpanded = remember { mutableStateOf(false) }
 
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    var dateString by remember(editableItem.value.date) {
+        mutableStateOf(dateFormat.format(editableItem.value.date))
+    }
 
     Scaffold(
         topBar = {
@@ -187,8 +184,17 @@ fun AddTransactionScreenContent(
                     }
             )
             OutlinedTextField(
-                value = editableItem.value.date,
-                onValueChange = { editableItem.value = editableItem.value.copy(date = it) },
+                value = dateString,
+                onValueChange = {
+                    dateString = it
+                    try {
+                        dateFormat.parse(it)?.let { parsedDate ->
+                            editableItem.value = editableItem.value.copy(date = parsedDate)
+                        }
+                    } catch (e: Exception) {
+                        // Ignore, user is still typing
+                    }
+                },
                 label = { Text("Date") }
             )
 
@@ -225,7 +231,17 @@ fun AddTransactionScreenContent(
             StandardButton(
                 label = if (transactionItem.id == null) R.string.add_transaction else R.string.update_transaction,
                 onButtonClick = {
-                    saveItem(editableItem.value, showErrorSnackbar)
+                    val item = editableItem.value
+                    val isDescriptionBlank = item.description.isBlank()
+                    val isAmountZero = item.amount == 0.0
+                    val isTypeBlank = item.type.isBlank()
+
+                    // validate that all fields are filled
+                    if (isDescriptionBlank || isAmountZero || isTypeBlank) {
+                        showErrorSnackbar(ErrorMessage.IdError(R.string.error_missing_fields))
+                    } else {
+                        saveItem(editableItem.value, showErrorSnackbar)
+                    }
                 }
             )
 

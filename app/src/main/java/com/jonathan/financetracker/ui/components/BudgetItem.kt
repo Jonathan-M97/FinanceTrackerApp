@@ -17,6 +17,7 @@ import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 @Composable
 fun BudgetItem(
     budget: Budget,
+    spentAmount: Double,
     modifier: Modifier = Modifier,
     onItemClick: (String) -> Unit
 ) {
@@ -33,7 +34,13 @@ fun BudgetItem(
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
-            text = budget.amount.toString(),
+            text = "Budgeted: ${budget.amount}",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Text(
+            text = "Spent: $spentAmount",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -48,6 +55,7 @@ fun BudgetItemPreview() {
     FinanceTrackerTheme {
         BudgetItem(
             budget = Budget(id = "asdf", category = "Groceries", amount = 200.00),
+            spentAmount = 150.00,
             onItemClick = {}
         )
     }

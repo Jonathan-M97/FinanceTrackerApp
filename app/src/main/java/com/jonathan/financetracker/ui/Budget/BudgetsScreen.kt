@@ -48,21 +48,22 @@ fun BudgetsScreen(
 ) {
     val isLoadingUser by viewModel.isLoadingUser.collectAsStateWithLifecycle()
 
-    if(isLoadingUser) {
+    if (isLoadingUser) {
         LoadingIndicator()
     } else {
-        val budgets = viewModel.Budgets.collectAsStateWithLifecycle(emptyList())
+        val budgets = viewModel.budgets.collectAsStateWithLifecycle(emptyList())
         val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
+        val spentAmounts by viewModel.spentAmounts.collectAsStateWithLifecycle()
 
         BudgetsScreenContent(
             budgets = budgets.value,
+            spentAmounts = spentAmounts,
             openDashboard = openDashboard,
             openSettingsScreen = openSettingsScreen,
             openAddBudgetScreen = openAddBudgetScreen,
             isAnonymous = isAnonymous,
             modifier = modifier
         )
-
     }
 
     LaunchedEffect(true) {
@@ -74,12 +75,13 @@ fun BudgetsScreen(
 @Composable
 fun BudgetsScreenContent(
     budgets: List<Budget>,
+    spentAmounts: Map<String, Double>,
     openDashboard: () -> Unit,
     openSettingsScreen: () -> Unit,
     openAddBudgetScreen: (String) -> Unit,
     isAnonymous: Boolean,
     modifier: Modifier = Modifier
-){
+) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
@@ -99,7 +101,7 @@ fun BudgetsScreenContent(
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)){
+        Column(modifier = Modifier.padding(innerPadding)) {
             // checks if using guest account or not and displays message accordingly
             if (isAnonymous) {
                 Text(
@@ -128,16 +130,15 @@ fun BudgetsScreenContent(
                 modifier = modifier.padding(horizontal = dimensionResource(R.dimen.padding_small))
             ) {
                 items(budgets) { budget ->
+                    val spentAmount = spentAmounts[budget.category] ?: 0.0
                     BudgetItem(
                         budget = budget,
+                        spentAmount = spentAmount,
                         onItemClick = openAddBudgetScreen
                     )
                 }
             }
-
-
         }
-
     }
 }
 
@@ -150,7 +151,5 @@ fun BudgetScreenPreview() {
             openSettingsScreen = {},
             openAddBudgetScreen = {}
         )
-
     }
 }
-
