@@ -1,18 +1,24 @@
 package com.jonathan.financetracker.ui.addtransaction
 
+import android.icu.util.Calendar
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -28,6 +34,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -133,6 +140,20 @@ fun AddTransactionScreenContent(
     var dateString by remember(editableItem.value.date) {
         mutableStateOf(dateFormat.format(editableItem.value.date))
     }
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    calendar.time = editableItem.value.date
+
+    val datePickerDialog = android.app.DatePickerDialog(
+        context,
+        { _, year: Int, month: Int, dayOfMonth: Int ->
+            calendar.set(year, month, dayOfMonth)
+            editableItem.value = editableItem.value.copy(date = calendar.time)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
 
     Scaffold(
         topBar = {
@@ -183,19 +204,35 @@ fun AddTransactionScreenContent(
                         }
                     }
             )
+//            OutlinedTextField(
+//                value = dateString,
+//                onValueChange = {
+//                    dateString = it
+//                    try {
+//                        dateFormat.parse(it)?.let { parsedDate ->
+//                            editableItem.value = editableItem.value.copy(date = parsedDate)
+//                        }
+//                    } catch (e: Exception) {
+//                        // Ignore, user is still typing
+//                    }
+//                },
+//                label = { Text("Date") }
+//            )
+
             OutlinedTextField(
                 value = dateString,
-                onValueChange = {
-                    dateString = it
-                    try {
-                        dateFormat.parse(it)?.let { parsedDate ->
-                            editableItem.value = editableItem.value.copy(date = parsedDate)
-                        }
-                    } catch (e: Exception) {
-                        // Ignore, user is still typing
-                    }
+                onValueChange = { },
+                label = { Text("Date") },
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Select Date",
+                        modifier = Modifier.clickable { datePickerDialog.show() }
+                    )
                 },
-                label = { Text("Date") }
+                colors = OutlinedTextFieldDefaults.colors(),
+                modifier = Modifier.clickable { datePickerDialog.show() }
             )
 
             ExposedDropdownMenuBox(
