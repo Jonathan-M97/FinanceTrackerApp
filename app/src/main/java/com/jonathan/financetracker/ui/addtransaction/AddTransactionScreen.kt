@@ -46,6 +46,7 @@ import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.data.model.Transaction
 import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
+import com.jonathan.financetracker.ui.components.DeleteButton
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.StandardButton
 import kotlinx.serialization.Serializable
@@ -204,20 +205,6 @@ fun AddTransactionScreenContent(
                         }
                     }
             )
-//            OutlinedTextField(
-//                value = dateString,
-//                onValueChange = {
-//                    dateString = it
-//                    try {
-//                        dateFormat.parse(it)?.let { parsedDate ->
-//                            editableItem.value = editableItem.value.copy(date = parsedDate)
-//                        }
-//                    } catch (e: Exception) {
-//                        // Ignore, user is still typing
-//                    }
-//                },
-//                label = { Text("Date") }
-//            )
 
             OutlinedTextField(
                 value = dateString,
@@ -284,7 +271,7 @@ fun AddTransactionScreenContent(
 
             // This button will only be composed if the budgetItem.id is not null
             if (transactionItem.id != null) {
-                StandardButton(
+                DeleteButton (
                     label = R.string.delete_transaction,
                     onButtonClick = {
                         deleteItem(editableItem.value, showErrorSnackbar)

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -97,7 +98,7 @@ fun DashboardScreenContent(
     Scaffold(
         topBar = {
             CenterTopAppBar(
-                title = "Finance Tracker",
+                title = "Transactions",
                 icon = Icons.Filled.Settings,
                 iconDescription = "Settings",
                 action = openSettingsScreen,
@@ -132,7 +133,12 @@ fun DashboardScreenContent(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
 
-                Button(onClick = { openBudgetScreen() }) {
+                Button(
+                    onClick = { openBudgetScreen() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ) ) {
                     Text("Budgets")
                 }
             }

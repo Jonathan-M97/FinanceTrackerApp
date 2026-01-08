@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.dp
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Transaction
 import java.text.SimpleDateFormat
@@ -39,7 +40,8 @@ fun TransactionItem(
                     stiffness = Spring.StiffnessLow
                 )
             )
-            .background(MaterialTheme.colorScheme.primaryContainer),
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .padding(16.dp)
     ) {
         Row (
             modifier = Modifier

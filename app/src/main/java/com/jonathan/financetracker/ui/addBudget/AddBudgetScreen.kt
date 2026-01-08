@@ -41,6 +41,7 @@ import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
+import com.jonathan.financetracker.ui.components.DeleteButton
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.StandardButton
 import kotlinx.serialization.Serializable
@@ -179,7 +180,7 @@ fun AddBudgetScreenContent(
 
             // This button will only be composed if the budgetItem.id is not null
             if (budgetItem.id != null) {
-                StandardButton(
+                DeleteButton (
                     label = R.string.delete_budget,
                     onButtonClick = {
                         deleteItem(editableItem.value, showErrorSnackbar)
