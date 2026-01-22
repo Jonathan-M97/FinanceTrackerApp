@@ -44,6 +44,7 @@ object BudgetRoute
 fun BudgetsScreen(
     openDashboard: () -> Unit,
     openSettingsScreen: () -> Unit,
+    openAddTransactionScreen: (String) -> Unit,
     openAddBudgetScreen: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BudgetsViewModel = hiltViewModel()
@@ -62,6 +63,7 @@ fun BudgetsScreen(
             spentAmounts = spentAmounts,
             openDashboard = openDashboard,
             openSettingsScreen = openSettingsScreen,
+            openAddTransactionScreen = openAddTransactionScreen,
             openAddBudgetScreen = openAddBudgetScreen,
             isAnonymous = isAnonymous,
             modifier = modifier
@@ -80,6 +82,7 @@ fun BudgetsScreenContent(
     spentAmounts: Map<String, Double>,
     openDashboard: () -> Unit,
     openSettingsScreen: () -> Unit,
+    openAddTransactionScreen: (String) -> Unit,
     openAddBudgetScreen: (String) -> Unit,
     isAnonymous: Boolean,
     modifier: Modifier = Modifier
@@ -98,8 +101,11 @@ fun BudgetsScreenContent(
         },
 
         floatingActionButton = {
-            FloatingActionButton(onClick = { openAddBudgetScreen("") }) {
-                Icon(Icons.Filled.Add, "Add Budget")
+            FloatingActionButton(onClick = { openAddTransactionScreen("") },
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) {
+                Icon(Icons.Filled.Add, "Add Transaction")
             }
         }
     ) { innerPadding ->
@@ -155,6 +161,7 @@ fun BudgetScreenPreview() {
         BudgetsScreen(
             openDashboard = {},
             openSettingsScreen = {},
+            openAddTransactionScreen = {},
             openAddBudgetScreen = {}
         )
     }

@@ -1,5 +1,6 @@
 package com.jonathan.financetracker.ui.components
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -23,6 +24,7 @@ import com.jonathan.financetracker.data.model.Transaction
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun TransactionItem(
     transaction: Transaction,
@@ -61,7 +63,7 @@ fun TransactionItem(
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text (
-                text = transaction.amount.toString(),
+                text = "$${String.format("%.2f", transaction.amount)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )

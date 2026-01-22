@@ -105,6 +105,9 @@ class MainActivity : ComponentActivity() {
                                 openSettingsScreen = {
                                     navController.navigate(SettingsRoute) { launchSingleTop = true }
                                 },
+                                openAddTransactionScreen = { itemId ->
+                                    navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
+                                },
                                 openAddBudgetScreen = { itemId ->
                                     navController.navigate(AddBudgetRoute(itemId)) { launchSingleTop = true }
                                 }

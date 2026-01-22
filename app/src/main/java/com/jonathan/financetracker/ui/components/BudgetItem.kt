@@ -43,18 +43,18 @@ fun BudgetItem(
 
     ) {
         Text(
-            text = budget.category,
+            text = budget.category + " goal: $${String.format("%.2f", budget.amount)}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
+//        Text(
+//            text = "Budgeted: $${String.format("%.2f", budget.amount)}",
+//            textAlign = TextAlign.Center,
+//            style = MaterialTheme.typography.bodyMedium,
+//            color = MaterialTheme.colorScheme.onPrimaryContainer
+//        )
         Text(
-            text = "Budgeted: ${budget.amount}",
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        Text(
-            text = "Spent: $spentAmount",
+            text = "Spent: $${String.format("%.2f", spentAmount)}",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer

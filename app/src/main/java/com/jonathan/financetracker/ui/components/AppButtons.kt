@@ -58,8 +58,8 @@ fun StandardButton(@StringRes label: Int, onButtonClick: () -> Unit) {
             .padding(horizontal = 24.dp),
         onClick = onButtonClick,
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.surface)
     ) {
@@ -79,8 +79,8 @@ fun DeleteButton(@StringRes label: Int, onButtonClick: () -> Unit) {
             .padding(horizontal = 24.dp),
         onClick = onButtonClick,
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.onErrorContainer,
-            contentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.surface)
     ) {

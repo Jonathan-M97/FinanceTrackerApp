@@ -107,8 +107,12 @@ fun DashboardScreenContent(
         },
 
         floatingActionButton = {
-            FloatingActionButton(onClick = { openAddTransactionScreen("") }) {
-                Icon(Icons.Filled.Add, "Add Transaction")
+            FloatingActionButton(
+                onClick = { openAddTransactionScreen("") },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ) {
+                Icon(Icons.Filled.Add,"Add Transaction")
             }
         }
     ) { innerPadding ->
