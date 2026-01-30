@@ -1,0 +1,111 @@
+package com.jonathan.financetracker.ui.addtransaction
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.jonathan.financetracker.MainViewModel
+import com.jonathan.financetracker.R
+import com.jonathan.financetracker.data.model.ErrorMessage
+import com.jonathan.financetracker.data.model.Transaction
+import com.jonathan.financetracker.data.repository.AuthRepository
+import com.jonathan.financetracker.data.repository.BudgetRepository
+import com.jonathan.financetracker.data.repository.TransactionRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import javax.inject.Inject
+
+@HiltViewModel
+
+class AddTransactionViewModel @Inject constructor(
+
+    savedStateHandle: SavedStateHandle,
+    private val authRepository: AuthRepository,
+    private val transactionRepository: TransactionRepository,
+    private val budgetsRepository: BudgetRepository,
+
+) : MainViewModel() {
+    private val _navigateDashboard = MutableStateFlow(false)
+    val navigateDashboard: StateFlow<Boolean>
+        get() = _navigateDashboard.asStateFlow()
+
+    private val addTransactionRouteArgs = savedStateHandle.toRoute<AddTransactionRoute>()
+    private val itemId: String = addTransactionRouteArgs.itemId
+
+
+    private val _transactionItem = MutableStateFlow<Transaction?>(null)
+    val transactionItem: StateFlow<Transaction?>
+        get() = _transactionItem.asStateFlow()
+
+
+    val budgetList: StateFlow<List<BudgetUI>> =
+        budgetsRepository.getBudgets(authRepository.currentUserIdFlow)
+            .map { budgets -> budgets.map { budget -> BudgetUI(budget.id, budget.category) } } // Convert List<Budget> to List<String>
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000L),
+                initialValue = emptyList()
+            )
+
+
+    init {
+        loadItem()
+    }
+
+    fun loadItem() {
+        launchCatching {
+            if (itemId.isBlank()) {
+                _transactionItem.value = Transaction()
+            } else {
+                _transactionItem.value = transactionRepository.getTransaction(itemId)
+            }
+        }
+    }
+
+    fun saveItem(
+        item: Transaction,
+        showErrorSnackbar: (ErrorMessage) -> Unit
+    ) {
+        val ownerId = authRepository.currentUser?.uid
+
+        if (ownerId.isNullOrBlank()) {
+            showErrorSnackbar(ErrorMessage.IdError(R.string.error_missing_owner_id))
+            return
+        }
+
+        if (item.description.isBlank()) {
+            showErrorSnackbar(ErrorMessage.IdError(R.string.error_missing_description))
+            return
+        }
+
+        launchCatching {
+            val newItem = item.copy(ownerId = ownerId)
+            if (itemId.isBlank()) {
+                transactionRepository.create(newItem)
+            } else {
+                transactionRepository.update(newItem)
+
+            }
+
+            _navigateDashboard.value = true
+        }
+    }
+
+    fun deleteItem(
+        item: Transaction,
+        showErrorSnackbar: (ErrorMessage) -> Unit
+    ) {
+        if (itemId.isNotBlank()) {
+            item.id?.let { id ->
+                launchCatching {
+                    transactionRepository.delete(id)
+                    _navigateDashboard.value = true
+                }
+            } ?: showErrorSnackbar(ErrorMessage.IdError(R.string.error_missing_id))
+        }
+    }
+}

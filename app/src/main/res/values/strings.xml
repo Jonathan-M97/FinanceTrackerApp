@@ -1,4 +1,36 @@
 <resources>
     <string name="app_name">Finance Tracker</string>
     <string name="back_button">Back</string>
+    <string name="generic_error">An unexpected error occurred. Please try again.</string>
+
+    <!-- addTransaction Screen -->
+    <string name="add_transaction">Add Transaction</string>
+    <string name="add_budget">Add Budget</string>
+    <string name="update_budget">Update Budget</string>
+    <string name="delete_budget">Delete Budget</string>
+
+
+
+
+    <!-- Settings Screen -->
+    <string name="settings">Settings</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="delete_account">Delete Account</string>
+
+    <!-- Delete Account Dialog -->
+    <string name="delete_account_title">Delete account</string>
+    <string name="delete_account_description">Are you sure you want to delete your account? This action is irreversible.</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Error messages -->
+    <string name="error_missing_owner_id">Missing owner ID</string>
+    <string name="error_missing_description">Missing description</string>
+    <string name="error_missing_category">Missing category</string>
+    <string name="error_missing_id">Missing ID in order to delete</string>
+    <string name="update_transaction">Update Transaction</string>
+    <string name="delete_transaction">Delete Transaction</string>
+    <string name="error_missing_fields">Please fill in all fields.</string>
+
 </resources>
