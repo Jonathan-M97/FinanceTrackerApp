@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.vector.Path
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
@@ -138,6 +139,8 @@ fun AddTransactionScreenContent(
     // State for the dropdown menu
     val isTypeDropdownExpanded = remember { mutableStateOf(false) }
     val isBudgetDropdownExpanded = remember { mutableStateOf(false) }
+    val isMethodOfPaymentDropdownExpanded = remember { mutableStateOf(false) }
+
 
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
@@ -287,6 +290,45 @@ fun AddTransactionScreenContent(
                                 }
                             )
                         }
+                    }
+                }
+
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = isMethodOfPaymentDropdownExpanded.value,
+                onExpandedChange = { isMethodOfPaymentDropdownExpanded.value = !isMethodOfPaymentDropdownExpanded.value }
+            ) {
+
+                val paymentMethodOptions = if (editableItem.value.type == "Income") {
+                    listOf("Venmo", "Cash", "Pay Check")
+                } else {
+                    listOf("Credit Card", "Cash", "Venmo")
+                }
+
+
+                OutlinedTextField(
+                    value = if (editableItem.value.type == "Income") {"Pay Check"} else {editableItem.value.methodOfPayment},
+                    onValueChange = {}, // Keep empty to prevent manual typing
+                    readOnly = true, // Make it non-editable
+                    label = { Text("Payment Method") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isMethodOfPaymentDropdownExpanded.value)
+                    },
+                    modifier = Modifier.menuAnchor() // Important for accessibility
+                )
+                ExposedDropdownMenu(
+                    expanded = isMethodOfPaymentDropdownExpanded.value,
+                    onDismissRequest = { isMethodOfPaymentDropdownExpanded.value = false }
+                ) {
+                    paymentMethodOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                editableItem.value = editableItem.value.copy(methodOfPayment = option)
+                                isMethodOfPaymentDropdownExpanded.value = false
+                            }
+                        )
                     }
                 }
             }
