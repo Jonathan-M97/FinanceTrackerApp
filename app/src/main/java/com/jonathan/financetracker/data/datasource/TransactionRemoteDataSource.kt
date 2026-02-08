@@ -9,9 +9,11 @@ import com.jonathan.financetracker.data.model.Transaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 import javax.inject.Inject
+
 
 class TransactionRemoteDataSource @Inject constructor(
     private val firestore: FirebaseFirestore
@@ -60,15 +62,21 @@ class TransactionRemoteDataSource @Inject constructor(
             .await()
     }
 
-    suspend fun getMonthlySpentAmount(ownerId: String): Map<String, Double> {
+    suspend fun getMonthlySpentAmount(ownerId: String, monthsAgo: Int): Map<String, Double> {
         val calendar = Calendar.getInstance()
+        calendar.add(Calendar.MONTH, -monthsAgo)
         calendar.set(Calendar.DAY_OF_MONTH, 1)
         val firstDayOfMonth = calendar.time
+
+        calendar.add(Calendar.MONTH, 1)
+        calendar.add(Calendar.DAY_OF_MONTH, -1)
+        val lastDayOfMonth = calendar.time
 
         val transactions = firestore
             .collection(TRANSACTION_COLLECTION)
             .whereEqualTo(OWNER_ID_FIELD, ownerId)
             .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
+            .whereLessThanOrEqualTo("date", lastDayOfMonth)
             .get()
             .await()
             .toObjects<Transaction>()
@@ -80,7 +88,82 @@ class TransactionRemoteDataSource @Inject constructor(
             }
     }
 
-    suspend fun getTotalMonthlySpentAmount(ownerId: String): Double {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getMonthlyTransactions(currentUserIdFlow: Flow<String?>, monthsAgo: Int): Flow<List<Transaction>> {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.MONTH, -monthsAgo)
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        val firstDayOfMonth = calendar.time
+
+        calendar.add(Calendar.MONTH, 1)
+        calendar.add(Calendar.DAY_OF_MONTH, -1)
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        val lastDayOfMonth = calendar.time
+
+        return currentUserIdFlow.flatMapLatest { ownerId ->
+                firestore
+                    .collection(TRANSACTION_COLLECTION)
+                    .whereEqualTo(OWNER_ID_FIELD, ownerId)
+                    .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
+                    .whereLessThanOrEqualTo("date", lastDayOfMonth)
+                    .orderBy("date", Query.Direction.DESCENDING)
+                    .dataObjects()
+        }
+    }
+
+    suspend fun getTotalMonthlySpentAmount(ownerId: String, monthsAgo: Int): Double {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.MONTH, -monthsAgo)
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        val firstDayOfMonth = calendar.time
+
+        calendar.add(Calendar.MONTH, 1)
+        calendar.add(Calendar.DAY_OF_MONTH, -1)
+        val lastDayOfMonth = calendar.time
+
+        val transactions = firestore
+            .collection(TRANSACTION_COLLECTION)
+            .whereEqualTo(OWNER_ID_FIELD, ownerId)
+            .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
+            .whereLessThanOrEqualTo("date", lastDayOfMonth)
+            .get()
+            .await()
+            .toObjects<Transaction>()
+
+        return transactions.sumOf { it.amount ?: 0.0 }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getCurrentMonthlySpentAmount(currentUserIdFlow: Flow<String?>): Flow<Map<String, Double>> {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        val firstDayOfMonth = calendar.time
+
+        return currentUserIdFlow.flatMapLatest { ownerId ->
+            firestore
+                .collection(TRANSACTION_COLLECTION)
+                .whereEqualTo(OWNER_ID_FIELD, ownerId)
+                .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
+                .dataObjects<Transaction>()
+                .map { transactions ->
+                    transactions
+                        .groupBy { it.budgetName ?: "" }
+                        .mapValues { (_, groupedTransactions) ->
+                            groupedTransactions.sumOf { it.amount ?: 0.0 }
+                        }
+                }
+        }
+    }
+
+    suspend fun getTotalCurrentMonthlySpentAmount(ownerId: String): Double {
 
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.DAY_OF_MONTH, 1)

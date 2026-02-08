@@ -28,11 +28,25 @@ class TransactionRepository @Inject constructor(
         transactionRemoteDataSource.delete(transactionId)
     }
 
-    suspend fun getMonthlySpentAmount(ownerId: String): Map<String, Double> {
-        return transactionRemoteDataSource.getMonthlySpentAmount(ownerId)
+    suspend fun getMonthlySpentAmount(ownerId: String, monthsAgo: Int): Map<String, Double> {
+        return transactionRemoteDataSource.getMonthlySpentAmount(ownerId, monthsAgo)
     }
 
-    suspend fun getTotalMonthlySpentAmount(ownerId: String): Double {
-        return transactionRemoteDataSource.getTotalMonthlySpentAmount(ownerId)
+
+    fun getMonthlyTransactions(currentUserIdFlow: Flow<String?>, monthsAgo: Int): Flow<List<Transaction>> {
+        return transactionRemoteDataSource.getMonthlyTransactions(currentUserIdFlow, monthsAgo)
+    }
+
+    suspend fun getTotalMonthlySpentAmount(ownerId: String, monthsAgo: Int): Double {
+        return transactionRemoteDataSource.getTotalMonthlySpentAmount(ownerId, monthsAgo)
+    }
+
+    fun getCurrentMonthlySpentAmount(currentUserIdFlow: Flow<String?>): Flow<Map<String, Double>> {
+        return transactionRemoteDataSource.getCurrentMonthlySpentAmount(currentUserIdFlow)
+    }
+
+
+    suspend fun getTotalCurrentMonthlySpentAmount(ownerId: String): Double {
+        return transactionRemoteDataSource.getTotalCurrentMonthlySpentAmount(ownerId)
     }
 }
