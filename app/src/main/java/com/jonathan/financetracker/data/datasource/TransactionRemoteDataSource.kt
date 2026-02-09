@@ -8,9 +8,11 @@ import com.google.firebase.firestore.toObjects
 import com.jonathan.financetracker.data.model.Transaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
+import java.time.YearMonth
 import java.util.Calendar
 import javax.inject.Inject
 
@@ -62,31 +64,63 @@ class TransactionRemoteDataSource @Inject constructor(
             .await()
     }
 
-    suspend fun getMonthlySpentAmount(ownerId: String, monthsAgo: Int): Map<String, Double> {
-        val calendar = Calendar.getInstance()
-        calendar.add(Calendar.MONTH, -monthsAgo)
-        calendar.set(Calendar.DAY_OF_MONTH, 1)
-        val firstDayOfMonth = calendar.time
+//    @OptIn(ExperimentalCoroutinesApi::class)
+//    fun getMonthlySpentAmount(currentUserIdFlow: Flow<String?>, monthsAgo: YearMonth): Flow<Map<String, Double>> {
+//        val calendar = Calendar.getInstance()
+//        calendar.add(Calendar.MONTH, -monthsAgo)
+//        calendar.set(Calendar.DAY_OF_MONTH, 1)
+//        val firstDayOfMonth = calendar.time
+//
+//        calendar.add(Calendar.MONTH, 1)
+//        calendar.add(Calendar.DAY_OF_MONTH, -1)
+//        val lastDayOfMonth = calendar.time
+//
+//        val transactions = firestore
+//            .collection(TRANSACTION_COLLECTION)
+//            .whereEqualTo(OWNER_ID_FIELD, currentUserIdFlow)
+//            .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
+//            .whereLessThanOrEqualTo("date", lastDayOfMonth)
+//            .get()
+//            .await()
+//            .toObjects<Transaction>()
+//
+//        return transactions
+//            .groupBy { it.budgetName ?: "" }
+//            .mapValues { (_, transactions) ->
+//                transactions.sumOf { it.amount ?: 0.0 }
+//            }
+//    }
 
-        calendar.add(Calendar.MONTH, 1)
-        calendar.add(Calendar.DAY_OF_MONTH, -1)
-        val lastDayOfMonth = calendar.time
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getMonthlySpentAmount(currentUserIdFlow: Flow<String?>, yearMonthFlow: Flow<YearMonth>): Flow<Map<String, Double>> {
+        // 1. Combine the latest user ID and the latest selected month
+        return currentUserIdFlow.combine(yearMonthFlow) { ownerId, yearMonth ->
+            // Create a pair of the ownerId and the calculated date range
+            val startOfMonth = yearMonth.atDay(1)
+            val endOfMonth = yearMonth.atEndOfMonth()
+            Pair(ownerId, Pair(startOfMonth, endOfMonth))
+        }.flatMapLatest { (ownerId, dateRange) -> // 2. Use flatMapLatest for efficient querying
+            val (start, end) = dateRange
 
-        val transactions = firestore
-            .collection(TRANSACTION_COLLECTION)
-            .whereEqualTo(OWNER_ID_FIELD, ownerId)
-            .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
-            .whereLessThanOrEqualTo("date", lastDayOfMonth)
-            .get()
-            .await()
-            .toObjects<Transaction>()
-
-        return transactions
-            .groupBy { it.budgetName ?: "" }
-            .mapValues { (_, transactions) ->
-                transactions.sumOf { it.amount ?: 0.0 }
-            }
+            // 3. Return a new data flow from Firestore
+            firestore
+                .collection(TRANSACTION_COLLECTION)
+                .whereEqualTo(OWNER_ID_FIELD, ownerId)
+                // Use the start and end of the month for the query
+                .whereGreaterThanOrEqualTo("date", java.util.Date.from(start.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
+                .whereLessThanOrEqualTo("date", java.util.Date.from(end.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
+                .dataObjects<Transaction>() // 4. Use dataObjects for a real-time stream
+                .map { transactions ->
+                    // 5. Group the results and sum the amounts
+                    transactions
+                        .groupBy { it.budgetName ?: "" }
+                        .mapValues { (_, groupedTransactions) ->
+                            groupedTransactions.sumOf { it.amount ?: 0.0 }
+                        }
+                }
+        }
     }
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getMonthlyTransactions(currentUserIdFlow: Flow<String?>, monthsAgo: Int): Flow<List<Transaction>> {

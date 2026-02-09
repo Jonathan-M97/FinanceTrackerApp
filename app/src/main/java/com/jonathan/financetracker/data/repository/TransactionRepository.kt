@@ -4,6 +4,7 @@ import com.jonathan.financetracker.data.datasource.TransactionRemoteDataSource
 import com.jonathan.financetracker.data.model.Transaction
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
+import java.time.YearMonth
 
 class TransactionRepository @Inject constructor(
     private val transactionRemoteDataSource: TransactionRemoteDataSource
@@ -28,8 +29,8 @@ class TransactionRepository @Inject constructor(
         transactionRemoteDataSource.delete(transactionId)
     }
 
-    suspend fun getMonthlySpentAmount(ownerId: String, monthsAgo: Int): Map<String, Double> {
-        return transactionRemoteDataSource.getMonthlySpentAmount(ownerId, monthsAgo)
+    fun getMonthlySpentAmount(currentUserIdFlow: Flow<String?>, yearMonth: Flow<YearMonth>): Flow<Map<String, Double>> {
+        return transactionRemoteDataSource.getMonthlySpentAmount(currentUserIdFlow, yearMonth)
     }
 
 
