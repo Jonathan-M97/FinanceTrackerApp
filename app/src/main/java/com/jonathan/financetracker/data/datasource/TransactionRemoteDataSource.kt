@@ -123,30 +123,21 @@ class TransactionRemoteDataSource @Inject constructor(
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getMonthlyTransactions(currentUserIdFlow: Flow<String?>, monthsAgo: Int): Flow<List<Transaction>> {
-        val calendar = Calendar.getInstance()
-        calendar.add(Calendar.MONTH, -monthsAgo)
-        calendar.set(Calendar.DAY_OF_MONTH, 1)
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        val firstDayOfMonth = calendar.time
+    fun getMonthlyTransactions(currentUserIdFlow: Flow<String?>, yearMonthFlow: Flow<YearMonth>): Flow<List<Transaction>> {
+        return currentUserIdFlow.combine(yearMonthFlow) { ownerId, yearMonth ->
+            val startOfMonth = yearMonth.atDay(1)
+            val endOfMonth = yearMonth.atEndOfMonth()
+            Pair(ownerId, Pair(startOfMonth, endOfMonth))
+        }.flatMapLatest { (ownerId, dateRange) ->
+            val (start, end) = dateRange
 
-        calendar.add(Calendar.MONTH, 1)
-        calendar.add(Calendar.DAY_OF_MONTH, -1)
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        val lastDayOfMonth = calendar.time
-
-        return currentUserIdFlow.flatMapLatest { ownerId ->
-                firestore
-                    .collection(TRANSACTION_COLLECTION)
-                    .whereEqualTo(OWNER_ID_FIELD, ownerId)
-                    .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
-                    .whereLessThanOrEqualTo("date", lastDayOfMonth)
-                    .orderBy("date", Query.Direction.DESCENDING)
-                    .dataObjects()
+            firestore
+                .collection(TRANSACTION_COLLECTION)
+                .whereEqualTo(OWNER_ID_FIELD, ownerId)
+                .whereGreaterThanOrEqualTo("date", java.util.Date.from(start.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
+                .whereLessThanOrEqualTo("date", java.util.Date.from(end.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
+                .orderBy("date", Query.Direction.DESCENDING)
+                .dataObjects<Transaction>()
         }
     }
 
