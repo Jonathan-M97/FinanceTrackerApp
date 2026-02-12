@@ -7,7 +7,9 @@ import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.jonathan.financetracker.data.model.Transaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -122,24 +124,52 @@ class TransactionRemoteDataSource @Inject constructor(
     }
 
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun getMonthlyTransactions(currentUserIdFlow: Flow<String?>, yearMonthFlow: Flow<YearMonth>): Flow<List<Transaction>> {
-        return currentUserIdFlow.combine(yearMonthFlow) { ownerId, yearMonth ->
-            val startOfMonth = yearMonth.atDay(1)
-            val endOfMonth = yearMonth.atEndOfMonth()
-            Pair(ownerId, Pair(startOfMonth, endOfMonth))
-        }.flatMapLatest { (ownerId, dateRange) ->
-            val (start, end) = dateRange
+//    @OptIn(ExperimentalCoroutinesApi::class)
+//    fun getMonthlyTransactions(currentUserIdFlow: Flow<String?>, yearMonthFlow: Flow<YearMonth>): Flow<List<Transaction>> {
+//        return currentUserIdFlow.combine(yearMonthFlow) { ownerId, yearMonth ->
+//            val startOfMonth = yearMonth.atDay(1)
+//            val endOfMonth = yearMonth.atEndOfMonth()
+//            Pair(ownerId, Pair(startOfMonth, endOfMonth))
+//        }.flatMapLatest { (ownerId, dateRange) ->
+//            val (start, end) = dateRange
+//
+//            firestore
+//                .collection(TRANSACTION_COLLECTION)
+//                .whereEqualTo(OWNER_ID_FIELD, ownerId)
+//                .whereGreaterThanOrEqualTo("date", java.util.Date.from(start.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
+//                .whereLessThanOrEqualTo("date", java.util.Date.from(end.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
+//                .orderBy("date", Query.Direction.DESCENDING)
+//                .dataObjects<Transaction>()
+//        }
+//    }
 
-            firestore
-                .collection(TRANSACTION_COLLECTION)
-                .whereEqualTo(OWNER_ID_FIELD, ownerId)
-                .whereGreaterThanOrEqualTo("date", java.util.Date.from(start.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
-                .whereLessThanOrEqualTo("date", java.util.Date.from(end.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
-                .orderBy("date", Query.Direction.DESCENDING)
-                .dataObjects<Transaction>()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getMonthlyTransactions(userId: String, ym: YearMonth): Flow<List<Transaction>> =
+        callbackFlow {
+            val startOfMonth = ym.atDay(1)
+            val endOfMonth = ym.atEndOfMonth()
+
+
+            val startDate = java.util.Date.from(startOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant())
+            val endDate = java.util.Date.from(endOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant())
+
+            val listener = firestore.collection(TRANSACTION_COLLECTION)
+                .whereEqualTo(OWNER_ID_FIELD, userId)
+                .whereGreaterThanOrEqualTo("date", startDate)
+                .whereLessThanOrEqualTo("date", endDate)
+                .orderBy("date", Query.Direction.DESCENDING) // It's good practice to order the results
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        close(error)
+                        return@addSnapshotListener
+                    }
+                    trySend(snapshot?.toObjects(Transaction::class.java).orEmpty())
+                }
+
+            awaitClose { listener.remove() }
         }
-    }
+
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getTotalMonthlySpentAmount(currentUserIdFlow: Flow<String?>, yearMonthFlow: Flow<YearMonth>): Flow<Double> {

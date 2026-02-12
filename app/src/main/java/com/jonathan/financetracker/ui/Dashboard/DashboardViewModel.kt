@@ -35,17 +35,26 @@ class DashboardViewModel @Inject constructor(
     val isAnonymous: StateFlow<Boolean>
         get() = _isAnonymous.asStateFlow()
 
-    val transactions: StateFlow<List<Transaction>> =
-        _selectedMonth.flatMapLatest { month ->
-            transactionsRepository.getMonthlyTransactions(
-                authRepository.currentUserIdFlow,
-                _selectedMonth // Pass the currently selected month
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+//    val transactions: StateFlow<List<Transaction>> =
+//        _selectedMonth.flatMapLatest { month ->
+//            transactionsRepository.getMonthlyTransactions(
+//                authRepository.currentUserIdFlow,
+//                _selectedMonth // Pass the currently selected month
+//            )
+//        }.stateIn(
+//            scope = viewModelScope,
+//            started = SharingStarted.WhileSubscribed(5000),
+//            initialValue = emptyList()
+//        )
+
+    val transactions = transactionsRepository.getMonthlyTransactions(
+        currentUserIdFlow = authRepository.currentUserIdFlow,
+        monthFlow = selectedMonth
+    ).stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        emptyList()
+    )
 
     // --- Functions to change the month ---
     fun goToNextMonth() {
