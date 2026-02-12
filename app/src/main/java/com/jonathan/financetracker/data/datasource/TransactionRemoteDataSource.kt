@@ -141,26 +141,32 @@ class TransactionRemoteDataSource @Inject constructor(
         }
     }
 
-    suspend fun getTotalMonthlySpentAmount(ownerId: String, monthsAgo: Int): Double {
-        val calendar = Calendar.getInstance()
-        calendar.add(Calendar.MONTH, -monthsAgo)
-        calendar.set(Calendar.DAY_OF_MONTH, 1)
-        val firstDayOfMonth = calendar.time
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getTotalMonthlySpentAmount(currentUserIdFlow: Flow<String?>, yearMonthFlow: Flow<YearMonth>): Flow<Double> {
+        return currentUserIdFlow.combine(yearMonthFlow) { ownerId, yearMonth ->
+            val startOfMonth = yearMonth.atDay(1)
+            val endOfMonth = yearMonth.atEndOfMonth()
+            Pair(ownerId, Pair(startOfMonth, endOfMonth))
+        }.flatMapLatest { (ownerId, dateRange) ->
+            val (start, end) = dateRange
 
-        calendar.add(Calendar.MONTH, 1)
-        calendar.add(Calendar.DAY_OF_MONTH, -1)
-        val lastDayOfMonth = calendar.time
-
-        val transactions = firestore
-            .collection(TRANSACTION_COLLECTION)
-            .whereEqualTo(OWNER_ID_FIELD, ownerId)
-            .whereGreaterThanOrEqualTo("date", firstDayOfMonth)
-            .whereLessThanOrEqualTo("date", lastDayOfMonth)
-            .get()
-            .await()
-            .toObjects<Transaction>()
-
-        return transactions.sumOf { it.amount ?: 0.0 }
+            firestore
+                .collection(TRANSACTION_COLLECTION)
+                .whereEqualTo(OWNER_ID_FIELD, ownerId)
+                .whereGreaterThanOrEqualTo(
+                    "date",
+                    java.util.Date.from(start.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant())
+                )
+                .whereLessThanOrEqualTo(
+                    "date",
+                    java.util.Date.from(end.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant())
+                )
+                .dataObjects<Transaction>() // Use dataObjects() for a real-time stream of transactions
+                .map { transactions ->
+                    // 6. Map the list of transactions to the sum of their amounts
+                    transactions.sumOf { it.amount ?: 0.0 }
+                }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

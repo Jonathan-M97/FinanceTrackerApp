@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
@@ -68,9 +70,18 @@ class BudgetsViewModel @Inject constructor(
                 initialValue = emptyMap()
             )
 
+    val totalMonthlySpentAmount: StateFlow<Double> =
+        // The repository function takes the flows directly and handles combining them.
+        transactionRepository.getTotalMonthlySpentAmount(
+            authRepository.currentUserIdFlow,
+            _selectedMonth
+        )
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = 0.0
+            )
 
-    val _totalMonthlySpentAmount = MutableStateFlow(0.0)
-    val totalMonthlySpentAmount: StateFlow<Double> = _totalMonthlySpentAmount.asStateFlow()
 
     val budgets = budgetRepository.getBudgets(authRepository.currentUserIdFlow)
 
@@ -93,9 +104,6 @@ class BudgetsViewModel @Inject constructor(
                 authRepository.createGuestAccount()
             }
 
-            authRepository.currentUser?.uid?.let {
-                _totalMonthlySpentAmount.value = transactionRepository.getTotalCurrentMonthlySpentAmount(it)
-            }
             _isAnonymous.value = authRepository.currentUser?.isAnonymous == true
             _isLoadingUser.value = false
         }
