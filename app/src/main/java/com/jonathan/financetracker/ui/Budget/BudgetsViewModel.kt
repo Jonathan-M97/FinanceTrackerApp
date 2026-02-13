@@ -10,9 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 import java.time.YearMonth
@@ -39,32 +36,12 @@ class BudgetsViewModel @Inject constructor(
     val isAnonymous: StateFlow<Boolean>
         get() = _isAnonymous.asStateFlow()
 
-    // --- Other existing states ---
-//    val budgets = _selectedMonth.flatMapLatest { month ->
-//        budgetRepository.getBudgets(authRepository.currentUserIdFlow)
-//    }.stateIn(
-//        scope = viewModelScope,
-//        started = SharingStarted.WhileSubscribed(5000),
-//        initialValue = emptyList()
-//    )
-
-//    val spentAmounts: StateFlow<Map<String, Double>> = _selectedMonth.flatMapLatest { month ->
-//        transactionRepository.getMonthlySpentAmount(authRepository.currentUserIdFlow, month)
-//    }.stateIn(
-//                scope = viewModelScope,
-//                started = SharingStarted.WhileSubscribed(5000),
-//                initialValue = emptyMap()
-//            )
-
-    // In your BudgetsViewModel.kt
-
     val spentAmounts: StateFlow<Map<String, Double>> =
         // Pass both the user ID flow and the selected month flow
         transactionRepository.getMonthlySpentAmount(
-            authRepository.currentUserIdFlow,
-            _selectedMonth
-        )
-            .stateIn(
+            currentUserIdFlow = authRepository.currentUserIdFlow,
+            yearMonth = selectedMonth
+        ).stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyMap()
@@ -73,10 +50,9 @@ class BudgetsViewModel @Inject constructor(
     val totalMonthlySpentAmount: StateFlow<Double> =
         // The repository function takes the flows directly and handles combining them.
         transactionRepository.getTotalMonthlySpentAmount(
-            authRepository.currentUserIdFlow,
-            _selectedMonth
-        )
-            .stateIn(
+            currentUserIdFlow = authRepository.currentUserIdFlow,
+            yearMonth = _selectedMonth
+        ).stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = 0.0

@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import java.time.YearMonth
 import javax.inject.Inject
@@ -20,7 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val transactionsRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository
 ) : MainViewModel() {
 
     // State for the selected month
@@ -35,26 +34,17 @@ class DashboardViewModel @Inject constructor(
     val isAnonymous: StateFlow<Boolean>
         get() = _isAnonymous.asStateFlow()
 
-//    val transactions: StateFlow<List<Transaction>> =
-//        _selectedMonth.flatMapLatest { month ->
-//            transactionsRepository.getMonthlyTransactions(
-//                authRepository.currentUserIdFlow,
-//                _selectedMonth // Pass the currently selected month
-//            )
-//        }.stateIn(
-//            scope = viewModelScope,
-//            started = SharingStarted.WhileSubscribed(5000),
-//            initialValue = emptyList()
-//        )
 
-    val transactions = transactionsRepository.getMonthlyTransactions(
-        currentUserIdFlow = authRepository.currentUserIdFlow,
-        monthFlow = selectedMonth
+    val transactions: StateFlow<List<Transaction>> =
+        transactionRepository.getMonthlyTransactions(
+            currentUserIdFlow = authRepository.currentUserIdFlow,
+            yearMonth = selectedMonth
     ).stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        emptyList()
-    )
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
 
     // --- Functions to change the month ---
     fun goToNextMonth() {
