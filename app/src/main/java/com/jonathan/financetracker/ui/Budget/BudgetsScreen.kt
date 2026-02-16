@@ -31,14 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-//import androidx.core.i18n.DateTimeFormatter
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Budget
-import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.ui.components.BudgetItem
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
+import com.jonathan.financetracker.ui.components.MonthNavigator
 import com.jonathan.financetracker.ui.components.ExpensePieChart
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.StandardButton
@@ -210,33 +209,33 @@ fun BudgetsScreenContent(
     }
 }
 
-@Composable
-fun MonthNavigator(
-    selectedMonth: YearMonth,
-    onPreviousClick: () -> Unit,
-    onNextClick: () -> Unit,
-    canGoToNext: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onPreviousClick) {
-            Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Month")
-        }
-        Text(
-            text = selectedMonth.format(formatter),
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center
-        )
-        IconButton(onClick = onNextClick, enabled = canGoToNext) {
-            Icon(Icons.Default.ChevronRight, contentDescription = "Next Month")
-        }
-    }
-}
+//@Composable
+//fun MonthNavigator(
+//    selectedMonth: YearMonth,
+//    onPreviousClick: () -> Unit,
+//    onNextClick: () -> Unit,
+//    canGoToNext: Boolean,
+//    modifier: Modifier = Modifier
+//) {
+//    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
+//    Row(
+//        modifier = modifier.fillMaxWidth(),
+//        horizontalArrangement = Arrangement.SpaceBetween,
+//        verticalAlignment = Alignment.CenterVertically
+//    ) {
+//        IconButton(onClick = onPreviousClick) {
+//            Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Month")
+//        }
+//        Text(
+//            text = selectedMonth.format(formatter),
+//            style = MaterialTheme.typography.titleMedium,
+//            textAlign = TextAlign.Center
+//        )
+//        IconButton(onClick = onNextClick, enabled = canGoToNext) {
+//            Icon(Icons.Default.ChevronRight, contentDescription = "Next Month")
+//        }
+//    }
+//}
 
 
 @Preview(showBackground = true)
