@@ -1,5 +1,6 @@
 package com.jonathan.financetracker.data.datasource
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.dataObjects
@@ -68,14 +69,15 @@ class TransactionRemoteDataSource @Inject constructor(
         callbackFlow {
             // Calculate the start and end of the month
             val startOfMonth = ym.atDay(1)
-            val endOfMonth = ym.atEndOfMonth()  // todo this doesn't account for transactions past 00:00 on the last day of the month
+            val endOfMonth = ym.atEndOfMonth()
 
             // Convert to Date objects for Firestore query
             val startDate = java.util.Date.from(
                 startOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
             )
+            // increments end date so it includes the entire last day of the month
             val endDate = java.util.Date.from(
-                endOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
+                endOfMonth.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
             )
 
             // Firestore query
@@ -102,14 +104,15 @@ class TransactionRemoteDataSource @Inject constructor(
         callbackFlow {
             // Calculate the start and end of the month
             val startOfMonth = ym.atDay(1)
-            val endOfMonth = ym.atEndOfMonth()  // todo this doesn't account for transactions past 00:00 on the last day of the month
+            val endOfMonth = ym.atEndOfMonth()
 
             // Convert to Date objects for Firestore query
             val startDate = java.util.Date.from(
                 startOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
             )
+            // increments end date so it includes the entire last day of the month
             val endDate = java.util.Date.from(
-                endOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
+                endOfMonth.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
             )
 
             // Firestore query
@@ -146,29 +149,34 @@ class TransactionRemoteDataSource @Inject constructor(
         callbackFlow {
             // Calculate the start and end of the month
             val startOfMonth = ym.atDay(1)
-            val endOfMonth = ym.atEndOfMonth()  // todo this doesn't account for transactions past 00:00 on the last day of the month
+            val endOfMonth = ym.atEndOfMonth()
 
             // Convert to Date objects for Firestore query
             val startDate = java.util.Date.from(
                 startOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
             )
+            // increments end date so it includes the entire last day of the month
             val endDate = java.util.Date.from(
-                endOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
+                endOfMonth.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
             )
 
             // Firestore query
             val listener = firestore.collection(TRANSACTION_COLLECTION)
                 .whereEqualTo(OWNER_ID_FIELD, userId)
+                .whereEqualTo("type", "Expense")
                 .whereGreaterThanOrEqualTo("date", startDate)
                 .whereLessThanOrEqualTo("date", endDate)
-                .orderBy("date", Query.Direction.DESCENDING)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
+
+                        // --- ERROR LOGS ---
+                        Log.e("TransactionsRepo", "Firestore snapshot error for userId=$userId, ym=$ym", error)
+
                         close(error)
                         return@addSnapshotListener
                     }
 
-                    // Grab all transactions within the month
+                    // Convert to models
                     val transactions = snapshot?.toObjects(Transaction::class.java).orEmpty()
 
                     // Group transactions by budget name and sum the amounts
