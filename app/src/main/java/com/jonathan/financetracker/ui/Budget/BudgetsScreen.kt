@@ -9,12 +9,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,10 +26,12 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+//import androidx.core.i18n.DateTimeFormatter
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
@@ -39,6 +44,10 @@ import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.StandardButton
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 import kotlinx.serialization.Serializable
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+
+
 
 @Serializable
 object BudgetRoute
@@ -61,12 +70,17 @@ fun BudgetsScreen(
         val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
         val spentAmounts by viewModel.spentAmounts.collectAsStateWithLifecycle()
         val totalMonthlySpentAmount by viewModel.totalMonthlySpentAmount.collectAsStateWithLifecycle()
+        val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
 
 
         BudgetsScreenContent(
             budgets = budgets.value,
             spentAmounts = spentAmounts,
             totalMonthlySpentAmount = totalMonthlySpentAmount,
+            selectedMonth = selectedMonth,
+            onPreviousMonthClick = {viewModel.goToPreviousMonth()},
+            onNextMonthClick = {viewModel.goToNextMonth()},
+            canGoToNextMonth = viewModel.canGoToNextMonth(),
             openDashboard = openDashboard,
             openSettingsScreen = openSettingsScreen,
             openAddTransactionScreen = openAddTransactionScreen,
@@ -87,6 +101,10 @@ fun BudgetsScreenContent(
     budgets: List<Budget>,
     spentAmounts: Map<String, Double>,
     totalMonthlySpentAmount: Double,
+    selectedMonth: YearMonth,
+    onPreviousMonthClick: () -> Unit,
+    onNextMonthClick: () -> Unit,
+    canGoToNextMonth: Boolean,
     openDashboard: () -> Unit,
     openSettingsScreen: () -> Unit,
     openAddTransactionScreen: (String) -> Unit,
@@ -145,14 +163,21 @@ fun BudgetsScreenContent(
                 }
             }
 
-
+            MonthNavigator(
+                selectedMonth = selectedMonth,
+                onPreviousClick = onPreviousMonthClick,
+                onNextClick = onNextMonthClick,
+                canGoToNext = canGoToNextMonth,
+                modifier = Modifier.padding(vertical = dimensionResource(R.dimen.padding_small))
+            )
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
                 modifier = modifier
                     .padding(
-                            horizontal = dimensionResource(R.dimen.padding_small),
-                            vertical = dimensionResource(R.dimen.padding_small))
+                        horizontal = dimensionResource(R.dimen.padding_small),
+                        vertical = dimensionResource(R.dimen.padding_small)
+                    )
                     .weight(1f)
             ) {
 
@@ -184,6 +209,35 @@ fun BudgetsScreenContent(
         }
     }
 }
+
+@Composable
+fun MonthNavigator(
+    selectedMonth: YearMonth,
+    onPreviousClick: () -> Unit,
+    onNextClick: () -> Unit,
+    canGoToNext: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onPreviousClick) {
+            Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Month")
+        }
+        Text(
+            text = selectedMonth.format(formatter),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
+        )
+        IconButton(onClick = onNextClick, enabled = canGoToNext) {
+            Icon(Icons.Default.ChevronRight, contentDescription = "Next Month")
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
