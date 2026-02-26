@@ -3,6 +3,7 @@ package com.jonathan.financetracker.ui.Dashboard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
@@ -44,8 +46,6 @@ object DashboardRoute
 
 @Composable
 fun DashboardScreen(
-    openSettingsScreen: () -> Unit,
-    openBudgetScreen: () -> Unit,
     openAddTransactionScreen: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel()
@@ -68,8 +68,6 @@ fun DashboardScreen(
             onPreviousMonthClick = {viewModel.goToPreviousMonth()},
             onNextMonthClick = {viewModel.goToNextMonth()},
             canGoToNextMonth = viewModel.canGoToNextMonth(),
-            openSettingsScreen = openSettingsScreen,
-            openBudgetScreen = openBudgetScreen,
             openAddTransactionScreen = openAddTransactionScreen,
             isAnonymous = isAnonymous,
             modifier = modifier
@@ -92,25 +90,15 @@ fun DashboardScreenContent(
     onPreviousMonthClick: () -> Unit,
     onNextMonthClick: () -> Unit,
     canGoToNextMonth: Boolean,
-    openSettingsScreen: () -> Unit,
-    openBudgetScreen: () -> Unit,
     openAddTransactionScreen: (String) -> Unit,
     isAnonymous: Boolean,
     modifier: Modifier = Modifier
 ) {
 
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
-        topBar = {
-            CenterTopAppBar(
-                title = "Transactions",
-                icon = Icons.Filled.Settings,
-                iconDescription = "Settings",
-                action = openSettingsScreen,
-                scrollBehavior = scrollBehavior
-            )
-        },
+        contentWindowInsets = WindowInsets(0.dp),
+
 
         floatingActionButton = {
             FloatingActionButton(
@@ -133,24 +121,6 @@ fun DashboardScreenContent(
                         .padding(dimensionResource(R.dimen.padding_medium)),
                     textAlign = TextAlign.Center
                 )
-            }
-
-            // button to switch to budgets
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(dimensionResource(R.dimen.padding_small)),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-
-                Button(
-                    onClick = { openBudgetScreen() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    ) ) {
-                    Text("Budgets")
-                }
             }
 
             MonthNavigator(
@@ -185,8 +155,6 @@ fun DashboardScreenContent(
 fun DashboardScreenPreview() {
     FinanceTrackerTheme {
         DashboardScreen(
-            openSettingsScreen = {},
-            openBudgetScreen = {},
             openAddTransactionScreen = {""}
         )
 

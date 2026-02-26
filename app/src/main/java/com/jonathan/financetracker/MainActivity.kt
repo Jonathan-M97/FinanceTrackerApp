@@ -12,11 +12,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.ui.Budget.BudgetRoute
@@ -29,6 +32,7 @@ import com.jonathan.financetracker.ui.addBudget.AddBudgetRoute
 import com.jonathan.financetracker.ui.addBudget.AddBudgetScreen
 import com.jonathan.financetracker.ui.addtransaction.AddTransactionRoute
 import com.jonathan.financetracker.ui.addtransaction.AddTransactionScreen
+import com.jonathan.financetracker.ui.components.BottomNavBar
 import com.jonathan.financetracker.ui.settings.SettingsRoute
 import com.jonathan.financetracker.ui.settings.SettingsScreen
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
@@ -47,6 +51,16 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val snackbarHostState = remember { SnackbarHostState() }
             val navController = rememberNavController()
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = navBackStackEntry?.destination
+
+            // Define which screens show the bottom bar
+            val showBottomBar = currentDestination?.let {
+                    it.hasRoute<DashboardRoute>() ||
+                            it.hasRoute<BudgetRoute>()||
+                        it.hasRoute<SettingsRoute>()
+                // Add TransactionsRoute here once you build it
+            } ?: false
 
             FinanceTrackerTheme {
                 Surface(
@@ -55,7 +69,19 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
-                        snackbarHost = { SnackbarHost(snackbarHostState) }
+                        snackbarHost = { SnackbarHost(snackbarHostState) },
+                        bottomBar = {
+                            if (showBottomBar) {
+                                BottomNavBar(currentDestination = currentDestination,
+                                    onNavigate = { route ->
+                                        navController.navigate(route) {
+                                            popUpTo(DashboardRoute) { inclusive = route is DashboardRoute }
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     ) { innerPadding ->
                         NavHost(
                             navController = navController,
@@ -67,12 +93,6 @@ class MainActivity : ComponentActivity() {
 
                             ) }
                             composable<DashboardRoute> { DashboardScreen(
-                                openSettingsScreen = {
-                                    navController.navigate(SettingsRoute) { launchSingleTop = true }
-                                },
-                                openBudgetScreen = {
-                                    navController.navigate(BudgetRoute) { launchSingleTop = true }
-                                },
                                 openAddTransactionScreen = { itemId ->
                                     navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
                                 }
@@ -99,12 +119,6 @@ class MainActivity : ComponentActivity() {
                                 }
                             ) }
                             composable<BudgetRoute> { BudgetsScreen(
-                                openDashboard = {
-                                    navController.navigate(DashboardRoute) { launchSingleTop = true }
-                                },
-                                openSettingsScreen = {
-                                    navController.navigate(SettingsRoute) { launchSingleTop = true }
-                                },
                                 openAddTransactionScreen = { itemId ->
                                     navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
                                 },

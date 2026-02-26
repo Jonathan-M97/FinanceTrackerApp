@@ -3,6 +3,7 @@ package com.jonathan.financetracker.ui.Budget
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
@@ -53,8 +55,6 @@ object BudgetRoute
 
 @Composable
 fun BudgetsScreen(
-    openDashboard: () -> Unit,
-    openSettingsScreen: () -> Unit,
     openAddTransactionScreen: (String) -> Unit,
     openAddBudgetScreen: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -80,8 +80,6 @@ fun BudgetsScreen(
             onPreviousMonthClick = {viewModel.goToPreviousMonth()},
             onNextMonthClick = {viewModel.goToNextMonth()},
             canGoToNextMonth = viewModel.canGoToNextMonth(),
-            openDashboard = openDashboard,
-            openSettingsScreen = openSettingsScreen,
             openAddTransactionScreen = openAddTransactionScreen,
             openAddBudgetScreen = openAddBudgetScreen,
             isAnonymous = isAnonymous,
@@ -104,25 +102,15 @@ fun BudgetsScreenContent(
     onPreviousMonthClick: () -> Unit,
     onNextMonthClick: () -> Unit,
     canGoToNextMonth: Boolean,
-    openDashboard: () -> Unit,
-    openSettingsScreen: () -> Unit,
     openAddTransactionScreen: (String) -> Unit,
     openAddBudgetScreen: (String) -> Unit,
     isAnonymous: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
-        topBar = {
-            CenterTopAppBar(
-                title = "Budgets/Goals",
-                icon = Icons.Filled.Settings,
-                iconDescription = "Settings",
-                action = openSettingsScreen,
-                scrollBehavior = scrollBehavior
-            )
-        },
+        contentWindowInsets = WindowInsets(0.dp),
+
 
         floatingActionButton = {
             FloatingActionButton(onClick = { openAddTransactionScreen("") },
@@ -143,23 +131,6 @@ fun BudgetsScreenContent(
                         .padding(dimensionResource(R.dimen.padding_medium)),
                     textAlign = TextAlign.Center
                 )
-            }
-
-            // button to switch to Transaction
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(dimensionResource(R.dimen.padding_small)),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-
-                Button(onClick = { openDashboard() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    ) ) {
-                    Text("Transaction")
-                }
             }
 
             MonthNavigator(
@@ -209,42 +180,12 @@ fun BudgetsScreenContent(
     }
 }
 
-//@Composable
-//fun MonthNavigator(
-//    selectedMonth: YearMonth,
-//    onPreviousClick: () -> Unit,
-//    onNextClick: () -> Unit,
-//    canGoToNext: Boolean,
-//    modifier: Modifier = Modifier
-//) {
-//    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-//    Row(
-//        modifier = modifier.fillMaxWidth(),
-//        horizontalArrangement = Arrangement.SpaceBetween,
-//        verticalAlignment = Alignment.CenterVertically
-//    ) {
-//        IconButton(onClick = onPreviousClick) {
-//            Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Month")
-//        }
-//        Text(
-//            text = selectedMonth.format(formatter),
-//            style = MaterialTheme.typography.titleMedium,
-//            textAlign = TextAlign.Center
-//        )
-//        IconButton(onClick = onNextClick, enabled = canGoToNext) {
-//            Icon(Icons.Default.ChevronRight, contentDescription = "Next Month")
-//        }
-//    }
-//}
-
 
 @Preview(showBackground = true)
 @Composable
 fun BudgetScreenPreview() {
     FinanceTrackerTheme {
         BudgetsScreen(
-            openDashboard = {},
-            openSettingsScreen = {},
             openAddTransactionScreen = {},
             openAddBudgetScreen = {}
         )
