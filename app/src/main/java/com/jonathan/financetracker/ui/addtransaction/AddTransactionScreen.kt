@@ -295,6 +295,14 @@ fun AddTransactionScreenContent(
 
             }
 
+            LaunchedEffect(editableItem.value.type) {
+                if (editableItem.value.type == "Income") {
+                    editableItem.value = editableItem.value.copy(methodOfPayment = "Pay Check")
+                } else {
+                    editableItem.value = editableItem.value.copy(methodOfPayment = "Credit Card")
+                }
+            }
+
             ExposedDropdownMenuBox(
                 expanded = isMethodOfPaymentDropdownExpanded.value,
                 onExpandedChange = { isMethodOfPaymentDropdownExpanded.value = !isMethodOfPaymentDropdownExpanded.value }
@@ -308,7 +316,8 @@ fun AddTransactionScreenContent(
 
 
                 OutlinedTextField(
-                    value = if (editableItem.value.type == "Income") {"Pay Check"} else {editableItem.value.methodOfPayment},
+//                    value = if (editableItem.value.type == "Income") {"Pay Check"} else {editableItem.value.methodOfPayment},
+                    value = editableItem.value.methodOfPayment,
                     onValueChange = {}, // Keep empty to prevent manual typing
                     readOnly = true, // Make it non-editable
                     label = { Text("Payment Method") },
