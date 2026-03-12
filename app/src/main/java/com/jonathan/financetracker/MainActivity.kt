@@ -26,6 +26,8 @@ import com.jonathan.financetracker.ui.Budget.BudgetRoute
 import com.jonathan.financetracker.ui.Budget.BudgetsScreen
 import com.jonathan.financetracker.ui.Dashboard.DashboardRoute
 import com.jonathan.financetracker.ui.Dashboard.DashboardScreen
+import com.jonathan.financetracker.ui.Transactions.TransactionsRoute
+import com.jonathan.financetracker.ui.Transactions.TransactionsScreen
 import com.jonathan.financetracker.ui.ExamplePage
 import com.jonathan.financetracker.ui.ExampleScreen
 import com.jonathan.financetracker.ui.addBudget.AddBudgetRoute
@@ -57,7 +59,8 @@ class MainActivity : ComponentActivity() {
             // Define which screens show the bottom bar
             val showBottomBar = currentDestination?.let {
                     it.hasRoute<DashboardRoute>() ||
-                            it.hasRoute<BudgetRoute>()||
+                            it.hasRoute<TransactionsRoute>() ||
+                            it.hasRoute<BudgetRoute>() ||
                         it.hasRoute<SettingsRoute>()
                 // Add TransactionsRoute here once you build it
             } ?: false
@@ -92,14 +95,15 @@ class MainActivity : ComponentActivity() {
                             composable<ExamplePage> { ExampleScreen(
 
                             ) }
-                            composable<DashboardRoute> { DashboardScreen(
+                            composable<DashboardRoute> { DashboardScreen() }
+                            composable<TransactionsRoute> { TransactionsScreen(
                                 openAddTransactionScreen = { itemId ->
                                     navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
                                 }
                             ) }
                             composable<AddTransactionRoute> { AddTransactionScreen(
                                 openDashboard = {
-                                    navController.navigate(DashboardRoute) { launchSingleTop = true }
+                                    navController.navigate(TransactionsRoute) { launchSingleTop = true }
                                 },
                                 showErrorSnackbar = { errorMessage ->
                                     val message = getErrorMessage(errorMessage)

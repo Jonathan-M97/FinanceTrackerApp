@@ -30,6 +30,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.jonathan.financetracker.ui.Budget.BudgetRoute
 import com.jonathan.financetracker.ui.Dashboard.DashboardRoute
+import com.jonathan.financetracker.ui.Transactions.TransactionsRoute
 
 data class BottomNavItem<T : Any>(
     val label: String,
@@ -44,7 +45,7 @@ fun BottomNavBar(
 ) {
     val items = listOf(
         BottomNavItem("Home", Icons.Default.Home, DashboardRoute),
-        // BottomNavItem("Transactions", Icons.Default.List, TransactionsRoute),
+        BottomNavItem("Transactions", Icons.Default.List, TransactionsRoute),
         BottomNavItem("Budgets", Icons.Default.AttachMoney, BudgetRoute),
         BottomNavItem("Settings", Icons.Default.Settings, SettingsRoute)
     )
@@ -62,6 +63,7 @@ fun BottomNavBar(
         items.forEach { item ->
             val isSelected = when (item.route) {
                 is DashboardRoute -> currentDestination?.hasRoute<DashboardRoute>() == true
+                is TransactionsRoute -> currentDestination?.hasRoute<TransactionsRoute>() == true
                 is BudgetRoute -> currentDestination?.hasRoute<BudgetRoute>() == true
                 is SettingsRoute -> currentDestination?.hasRoute<SettingsRoute>() == true
                 else -> false
