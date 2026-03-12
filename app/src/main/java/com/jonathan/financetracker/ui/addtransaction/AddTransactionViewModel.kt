@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
@@ -83,7 +85,11 @@ class AddTransactionViewModel @Inject constructor(
         }
 
         launchCatching {
-            val newItem = item.copy(ownerId = ownerId)
+            val yearMonth = item.date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM"))
+            val newItem = item.copy(ownerId = ownerId, yearMonth = yearMonth)
             if (itemId.isBlank()) {
                 transactionRepository.create(newItem)
             } else {

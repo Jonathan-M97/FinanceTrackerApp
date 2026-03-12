@@ -13,4 +13,5 @@ data class Transaction(
     val budgetName: String = "",
     val budgetId: String = "",
     val ownerId: String = "",
+    val yearMonth: String = "",
 )

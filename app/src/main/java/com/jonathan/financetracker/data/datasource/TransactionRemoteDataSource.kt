@@ -65,26 +65,12 @@ class TransactionRemoteDataSource @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getMonthlyTransactions(userId: String, ym: YearMonth): Flow<List<Transaction>> =
-        // Use callbackFlow to get a stream of data from Firestore
         callbackFlow {
-            // Calculate the start and end of the month
-            val startOfMonth = ym.atDay(1)
-            val endOfMonth = ym.atEndOfMonth()
+            val ymString = ym.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
 
-            // Convert to Date objects for Firestore query
-            val startDate = java.util.Date.from(
-                startOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
-            )
-            // increments end date so it includes the entire last day of the month
-            val endDate = java.util.Date.from(
-                endOfMonth.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
-            )
-
-            // Firestore query
             val listener = firestore.collection(TRANSACTION_COLLECTION)
                 .whereEqualTo(OWNER_ID_FIELD, userId)
-                .whereGreaterThanOrEqualTo("date", startDate)
-                .whereLessThanOrEqualTo("date", endDate)
+                .whereEqualTo(YEAR_MONTH_FIELD, ymString)
                 .orderBy("date", Query.Direction.DESCENDING)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
@@ -100,44 +86,26 @@ class TransactionRemoteDataSource @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getMonthlySpentAmount(userId: String, ym: YearMonth): Flow<Map<String, Double>> =
-        // Use callbackFlow to get a stream of data from Firestore
         callbackFlow {
-            // Calculate the start and end of the month
-            val startOfMonth = ym.atDay(1)
-            val endOfMonth = ym.atEndOfMonth()
+            val ymString = ym.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
 
-            // Convert to Date objects for Firestore query
-            val startDate = java.util.Date.from(
-                startOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
-            )
-            // increments end date so it includes the entire last day of the month
-            val endDate = java.util.Date.from(
-                endOfMonth.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
-            )
-
-            // Firestore query
             val listener = firestore.collection(TRANSACTION_COLLECTION)
                 .whereEqualTo(OWNER_ID_FIELD, userId)
-                .whereGreaterThanOrEqualTo("date", startDate)
-                .whereLessThanOrEqualTo("date", endDate)
-                .orderBy("date", Query.Direction.DESCENDING)
+                .whereEqualTo(YEAR_MONTH_FIELD, ymString)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         close(error)
                         return@addSnapshotListener
                     }
 
-                    // Grab all transactions within the month
                     val transactions = snapshot?.toObjects(Transaction::class.java).orEmpty()
 
-                    // Group transactions by budget name and sum the amounts
                     val result: Map<String, Double> = transactions
                         .filter { it.type == "Expense" }
                         .groupBy { it.budgetName }
                         .mapValues { (_, items) -> items.sumOf { it.amount } }
 
                     trySend(result)
-
                 }
 
             awaitClose { listener.remove() }
@@ -145,45 +113,23 @@ class TransactionRemoteDataSource @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getTotalMonthlySpentAmount(userId: String, ym: YearMonth): Flow<Double> =
-        // Use callbackFlow to get a stream of data from Firestore
         callbackFlow {
-            // Calculate the start and end of the month
-            val startOfMonth = ym.atDay(1)
-            val endOfMonth = ym.atEndOfMonth()
+            val ymString = ym.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
 
-            // Convert to Date objects for Firestore query
-            val startDate = java.util.Date.from(
-                startOfMonth.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
-            )
-            // increments end date so it includes the entire last day of the month
-            val endDate = java.util.Date.from(
-                endOfMonth.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
-            )
-
-            // Firestore query
             val listener = firestore.collection(TRANSACTION_COLLECTION)
                 .whereEqualTo(OWNER_ID_FIELD, userId)
+                .whereEqualTo(YEAR_MONTH_FIELD, ymString)
                 .whereEqualTo("type", "Expense")
-                .whereGreaterThanOrEqualTo("date", startDate)
-                .whereLessThanOrEqualTo("date", endDate)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
-
-                        // --- ERROR LOGS ---
                         Log.e("TransactionsRepo", "Firestore snapshot error for userId=$userId, ym=$ym", error)
-
                         close(error)
                         return@addSnapshotListener
                     }
 
-                    // Convert to models
                     val transactions = snapshot?.toObjects(Transaction::class.java).orEmpty()
-
-                    // Group transactions by budget name and sum the amounts
                     val result: Double = transactions.sumOf { it.amount ?: 0.0 }
-
                     trySend(result)
-
                 }
 
             awaitClose { listener.remove() }
@@ -191,6 +137,7 @@ class TransactionRemoteDataSource @Inject constructor(
 
     companion object {
         private const val OWNER_ID_FIELD = "ownerId"
+        private const val YEAR_MONTH_FIELD = "yearMonth"
         private const val TRANSACTION_COLLECTION = "transactions"
     }
 }
