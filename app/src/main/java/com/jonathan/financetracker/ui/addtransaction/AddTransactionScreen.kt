@@ -145,17 +145,17 @@ fun AddTransactionScreenContent(
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     var dateString by remember(editableItem.value.date) {
-        mutableStateOf(dateFormat.format(editableItem.value.date))
+        mutableStateOf(dateFormat.format(editableItem.value.date.toDate()))
     }
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
-    calendar.time = editableItem.value.date
+    calendar.time = editableItem.value.date.toDate()
 
     val datePickerDialog = android.app.DatePickerDialog(
         context,
         { _, year: Int, month: Int, dayOfMonth: Int ->
             calendar.set(year, month, dayOfMonth)
-            editableItem.value = editableItem.value.copy(date = calendar.time)
+            editableItem.value = editableItem.value.copy(date = com.google.firebase.Timestamp(calendar.time))
         },
         calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH),
