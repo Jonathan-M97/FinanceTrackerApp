@@ -19,9 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
+import com.jonathan.financetracker.ui.components.ExpensePieChart
 import com.jonathan.financetracker.ui.components.LoadingIndicator
+import com.jonathan.financetracker.ui.components.MonthNavigator
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 import kotlinx.serialization.Serializable
+import java.time.YearMonth
 
 @Serializable
 object DashboardRoute
@@ -37,9 +40,18 @@ fun DashboardScreen(
         LoadingIndicator()
     } else {
         val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
+        val spentAmounts by viewModel.spentAmounts.collectAsStateWithLifecycle()
+        val totalMonthlySpentAmount by viewModel.totalMonthlySpentAmount.collectAsStateWithLifecycle()
+        val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
 
         DashboardScreenContent(
             isAnonymous = isAnonymous,
+            spentAmounts = spentAmounts,
+            totalMonthlySpentAmount = totalMonthlySpentAmount,
+            selectedMonth = selectedMonth,
+            onPreviousMonthClick = { viewModel.goToPreviousMonth() },
+            onNextMonthClick = { viewModel.goToNextMonth() },
+            canGoToNextMonth = viewModel.canGoToNextMonth(),
             modifier = modifier
         )
     }
@@ -52,6 +64,12 @@ fun DashboardScreen(
 @Composable
 fun DashboardScreenContent(
     isAnonymous: Boolean,
+    spentAmounts: Map<String, Double>,
+    totalMonthlySpentAmount: Double,
+    selectedMonth: YearMonth,
+    onPreviousMonthClick: () -> Unit,
+    onNextMonthClick: () -> Unit,
+    canGoToNextMonth: Boolean,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -72,7 +90,21 @@ fun DashboardScreenContent(
                 )
             }
 
-            // TODO: Build out the home page content
+            MonthNavigator(
+                selectedMonth = selectedMonth,
+                onPreviousClick = onPreviousMonthClick,
+                onNextClick = onNextMonthClick,
+                canGoToNext = canGoToNextMonth,
+                modifier = Modifier.padding(vertical = dimensionResource(R.dimen.padding_small))
+            )
+
+            if (spentAmounts.isNotEmpty()) {
+                ExpensePieChart(
+                    data = spentAmounts,
+                    total = totalMonthlySpentAmount,
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+                )
+            }
         }
     }
 }

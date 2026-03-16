@@ -47,18 +47,6 @@ class BudgetsViewModel @Inject constructor(
                 initialValue = emptyMap()
             )
 
-    val totalMonthlySpentAmount: StateFlow<Double> =
-        // The repository function takes the flows directly and handles combining them.
-        transactionRepository.getTotalMonthlySpentAmount(
-            currentUserIdFlow = authRepository.currentUserIdFlow,
-            yearMonth = _selectedMonth
-        ).stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = 0.0
-            )
-
-
     val budgets = budgetRepository.getBudgets(authRepository.currentUserIdFlow)
 
     // --- Functions to change the month ---

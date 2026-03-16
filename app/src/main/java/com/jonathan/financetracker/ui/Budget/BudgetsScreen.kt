@@ -40,7 +40,6 @@ import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.ui.components.BudgetItem
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
 import com.jonathan.financetracker.ui.components.MonthNavigator
-import com.jonathan.financetracker.ui.components.ExpensePieChart
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.StandardButton
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
@@ -68,14 +67,12 @@ fun BudgetsScreen(
         val budgets = viewModel.budgets.collectAsStateWithLifecycle(emptyList())
         val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
         val spentAmounts by viewModel.spentAmounts.collectAsStateWithLifecycle()
-        val totalMonthlySpentAmount by viewModel.totalMonthlySpentAmount.collectAsStateWithLifecycle()
         val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
 
 
         BudgetsScreenContent(
             budgets = budgets.value,
             spentAmounts = spentAmounts,
-            totalMonthlySpentAmount = totalMonthlySpentAmount,
             selectedMonth = selectedMonth,
             onPreviousMonthClick = {viewModel.goToPreviousMonth()},
             onNextMonthClick = {viewModel.goToNextMonth()},
@@ -97,7 +94,6 @@ fun BudgetsScreen(
 fun BudgetsScreenContent(
     budgets: List<Budget>,
     spentAmounts: Map<String, Double>,
-    totalMonthlySpentAmount: Double,
     selectedMonth: YearMonth,
     onPreviousMonthClick: () -> Unit,
     onNextMonthClick: () -> Unit,
@@ -150,16 +146,6 @@ fun BudgetsScreenContent(
                     )
                     .weight(1f)
             ) {
-
-                item {
-                    if (spentAmounts.isNotEmpty()) {
-                        ExpensePieChart(
-                            data = spentAmounts,
-                            total = totalMonthlySpentAmount,
-                            modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
-                        )
-                    }
-                }
 
                 items(budgets) { budget ->
                     val spentAmount = spentAmounts[budget.category] ?: 0.0
