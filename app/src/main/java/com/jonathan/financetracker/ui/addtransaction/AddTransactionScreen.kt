@@ -123,7 +123,7 @@ fun AddTransactionScreenContent(
     deleteItem: (Transaction, (ErrorMessage) -> Unit) -> Unit
 ) {
 
-    val editableItem = remember(transactionItem) { mutableStateOf(transactionItem) }
+    var editableItem = remember(transactionItem) { mutableStateOf(transactionItem) }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val focusRequester = remember { FocusRequester() }

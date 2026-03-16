@@ -1,8 +1,7 @@
 package com.jonathan.financetracker.data.model
 
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
-import java.util.Date
+import com.google.firebase.Timestamp
 
 data class Transaction(
     @DocumentId val id: String? = null,
