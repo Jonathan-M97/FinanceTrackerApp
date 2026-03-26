@@ -102,4 +102,10 @@ dependencies {
     // For MPAndroidChart
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
+    // Plaid Link SDK
+    implementation(libs.plaid.link)
+
+    // Firebase Cloud Functions (for calling Plaid backend)
+    implementation(libs.firebase.functions)
+
 }

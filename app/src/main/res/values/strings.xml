@@ -24,6 +24,18 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
 
+    <!-- Plaid / Linked Accounts -->
+    <string name="linked_accounts">Linked Accounts</string>
+    <string name="link_bank_account">Link Bank Account</string>
+    <string name="sync_transactions">Sync Transactions</string>
+    <string name="unlink_account">Unlink Account</string>
+    <string name="unlink_account_title">Unlink account</string>
+    <string name="unlink_account_description">Are you sure you want to unlink this account? Synced transactions from this bank will be removed.</string>
+    <string name="unlink">Unlink</string>
+    <string name="no_linked_accounts">No bank accounts linked yet.</string>
+    <string name="syncing_transactions">Syncing transactions&#8230;</string>
+    <string name="plaid_link_error">Failed to connect to your bank. Please try again.</string>
+
     <!-- Error messages -->
     <string name="error_missing_owner_id">Missing owner ID</string>
     <string name="error_missing_description">Missing description</string>

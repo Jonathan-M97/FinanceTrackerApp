@@ -14,6 +14,9 @@ data class Transaction(
     val budgetId: String = "",
     val ownerId: String = "",
     val yearMonth: String = "",
-    val isManuallyCreated: Boolean = true
+    val isManuallyCreated: Boolean = true,
+    val plaidTransactionId: String? = null,
+    val plaidCategory: String? = null,
+    val plaidItemId: String? = null
 )
 
