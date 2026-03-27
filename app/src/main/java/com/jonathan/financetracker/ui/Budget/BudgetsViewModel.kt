@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 import java.time.YearMonth
@@ -47,7 +48,11 @@ class BudgetsViewModel @Inject constructor(
                 initialValue = emptyMap()
             )
 
+    private val _isLoadingData = MutableStateFlow(true)
+    val isLoadingData: StateFlow<Boolean> = _isLoadingData.asStateFlow()
+
     val budgets = budgetRepository.getBudgets(authRepository.currentUserIdFlow)
+        .onEach { _isLoadingData.value = false }
 
     // --- Functions to change the month ---
     fun goToNextMonth() {

@@ -1,6 +1,9 @@
 package com.jonathan.financetracker.ui.settings
 
+import android.app.Application
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.jonathan.financetracker.MainViewModel
+import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.data.model.LinkedAccount
 import com.jonathan.financetracker.data.repository.AuthRepository
@@ -13,6 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+    private val application: Application,
     private val authRepository: AuthRepository,
     private val plaidRepository: PlaidRepository
 ) : MainViewModel() {
@@ -45,7 +49,7 @@ class SettingsViewModel @Inject constructor(
     private fun showError(error: ErrorMessage) {
         _errorMessage.value = when (error) {
             is ErrorMessage.StringError -> error.message
-            is ErrorMessage.IdError -> "Something went wrong"
+            is ErrorMessage.IdError -> application.getString(error.message)
         }
     }
 
@@ -94,23 +98,44 @@ class SettingsViewModel @Inject constructor(
         _linkToken.value = null
     }
 
+    fun onPlaidLinkError(message: String?) {
+        _errorMessage.value = message
+            ?: application.getString(R.string.error_plaid_link_failed)
+    }
+
     fun exchangePublicToken(
         publicToken: String,
         institutionName: String,
         institutionId: String
     ) {
-        launchCatching(::showError) {
+        launchCatching(::showPlaidError) {
             plaidRepository.exchangePublicToken(publicToken, institutionName, institutionId)
             loadLinkedAccounts()
         }
     }
 
     fun syncTransactions() {
-        launchCatching(::showError) {
+        launchCatching(::showPlaidError) {
             _isSyncing.value = true
-            val count = plaidRepository.syncTransactions()
-            _syncResultMessage.value = "Synced $count transactions."
-            _isSyncing.value = false
+            try {
+                val count = plaidRepository.syncTransactions()
+                _syncResultMessage.value = "Synced $count transactions."
+            } finally {
+                _isSyncing.value = false
+            }
+        }
+    }
+
+    private fun showPlaidError(error: ErrorMessage) {
+        val message = when (error) {
+            is ErrorMessage.StringError -> error.message
+            is ErrorMessage.IdError -> application.getString(error.message)
+        }
+        // Check for specific Plaid error codes returned by Cloud Functions
+        _errorMessage.value = when {
+            message.contains("ITEM_LOGIN_REQUIRED") ->
+                application.getString(R.string.error_bank_connection_expired)
+            else -> message
         }
     }
 

@@ -13,15 +13,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
+import com.jonathan.financetracker.ui.components.EmptyStateMessage
 import com.jonathan.financetracker.ui.components.ExpensePieChart
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.MonthNavigator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PieChart
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 import kotlinx.serialization.Serializable
 import java.time.YearMonth
@@ -43,9 +47,11 @@ fun DashboardScreen(
         val spentAmounts by viewModel.spentAmounts.collectAsStateWithLifecycle()
         val totalMonthlySpentAmount by viewModel.totalMonthlySpentAmount.collectAsStateWithLifecycle()
         val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
+        val isLoadingData by viewModel.isLoadingData.collectAsStateWithLifecycle()
 
         DashboardScreenContent(
             isAnonymous = isAnonymous,
+            isLoadingData = isLoadingData,
             spentAmounts = spentAmounts,
             totalMonthlySpentAmount = totalMonthlySpentAmount,
             selectedMonth = selectedMonth,
@@ -64,6 +70,7 @@ fun DashboardScreen(
 @Composable
 fun DashboardScreenContent(
     isAnonymous: Boolean,
+    isLoadingData: Boolean,
     spentAmounts: Map<String, Double>,
     totalMonthlySpentAmount: Double,
     selectedMonth: YearMonth,
@@ -98,7 +105,14 @@ fun DashboardScreenContent(
                 modifier = Modifier.padding(vertical = dimensionResource(R.dimen.padding_small))
             )
 
-            if (spentAmounts.isNotEmpty()) {
+            if (isLoadingData) {
+                LoadingIndicator()
+            } else if (spentAmounts.isEmpty()) {
+                EmptyStateMessage(
+                    message = stringResource(R.string.empty_dashboard),
+                    icon = Icons.Default.PieChart
+                )
+            } else {
                 ExpensePieChart(
                     data = spentAmounts,
                     total = totalMonthlySpentAmount,

@@ -39,10 +39,13 @@ import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Budget
 import com.jonathan.financetracker.ui.components.BudgetItem
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
+import com.jonathan.financetracker.ui.components.EmptyStateMessage
 import com.jonathan.financetracker.ui.components.MonthNavigator
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.StandardButton
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.ui.res.stringResource
 import kotlinx.serialization.Serializable
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -68,10 +71,11 @@ fun BudgetsScreen(
         val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
         val spentAmounts by viewModel.spentAmounts.collectAsStateWithLifecycle()
         val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
-
+        val isLoadingData by viewModel.isLoadingData.collectAsStateWithLifecycle()
 
         BudgetsScreenContent(
             budgets = budgets.value,
+            isLoadingData = isLoadingData,
             spentAmounts = spentAmounts,
             selectedMonth = selectedMonth,
             onPreviousMonthClick = {viewModel.goToPreviousMonth()},
@@ -93,6 +97,7 @@ fun BudgetsScreen(
 @Composable
 fun BudgetsScreenContent(
     budgets: List<Budget>,
+    isLoadingData: Boolean,
     spentAmounts: Map<String, Double>,
     selectedMonth: YearMonth,
     onPreviousMonthClick: () -> Unit,
@@ -137,23 +142,32 @@ fun BudgetsScreenContent(
                 modifier = Modifier.padding(vertical = dimensionResource(R.dimen.padding_small))
             )
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-                modifier = modifier
-                    .padding(
-                        horizontal = dimensionResource(R.dimen.padding_small),
-                        vertical = dimensionResource(R.dimen.padding_small)
-                    )
-                    .weight(1f)
-            ) {
-
-                items(budgets) { budget ->
-                    val spentAmount = spentAmounts[budget.category] ?: 0.0
-                    BudgetItem(
-                        budget = budget,
-                        spentAmount = spentAmount,
-                        onItemClick = openAddBudgetScreen
-                    )
+            if (isLoadingData) {
+                LoadingIndicator()
+            } else if (budgets.isEmpty()) {
+                EmptyStateMessage(
+                    message = stringResource(R.string.empty_budgets),
+                    icon = Icons.Default.AccountBalanceWallet,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+                    modifier = modifier
+                        .padding(
+                            horizontal = dimensionResource(R.dimen.padding_small),
+                            vertical = dimensionResource(R.dimen.padding_small)
+                        )
+                        .weight(1f)
+                ) {
+                    items(budgets) { budget ->
+                        val spentAmount = spentAmounts[budget.category] ?: 0.0
+                        BudgetItem(
+                            budget = budget,
+                            spentAmount = spentAmount,
+                            onItemClick = openAddBudgetScreen
+                        )
+                    }
                 }
             }
 

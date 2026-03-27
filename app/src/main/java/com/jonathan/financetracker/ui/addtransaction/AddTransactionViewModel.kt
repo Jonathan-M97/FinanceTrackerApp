@@ -84,6 +84,21 @@ class AddTransactionViewModel @Inject constructor(
             return
         }
 
+        if (item.description.length > 100) {
+            showErrorSnackbar(ErrorMessage.IdError(R.string.error_description_too_long))
+            return
+        }
+
+        if (item.amount <= 0.0) {
+            showErrorSnackbar(ErrorMessage.IdError(R.string.error_invalid_amount))
+            return
+        }
+
+        if (item.amount > 999_999.99) {
+            showErrorSnackbar(ErrorMessage.IdError(R.string.error_amount_too_large))
+            return
+        }
+
         launchCatching {
             val yearMonth = item.date.toInstant()
                 .atZone(ZoneId.systemDefault())
