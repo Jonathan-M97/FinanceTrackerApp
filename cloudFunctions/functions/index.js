@@ -41,6 +41,34 @@ function getPlaidErrorMessage(error, fallback) {
   return fallback;
 }
 
+// ─── Rate Limiting ──────────────────────────────────────────────────
+// Limits each user to 10 Plaid API calls per hour.
+// Tracks timestamps in rate_limits/{userId} using a Firestore transaction.
+const RATE_LIMIT_MAX_CALLS = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+async function checkRateLimit(userId) {
+  const ref = db.collection("rate_limits").doc(userId);
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+  return db.runTransaction(async (transaction) => {
+    const doc = await transaction.get(ref);
+    const data = doc.exists ? doc.data() : {calls: []};
+    const recentCalls = data.calls.filter((ts) => ts > windowStart);
+
+    if (recentCalls.length >= RATE_LIMIT_MAX_CALLS) {
+      throw new HttpsError(
+          "resource-exhausted",
+          "Rate limit exceeded. Please wait before trying again.",
+      );
+    }
+
+    recentCalls.push(now);
+    transaction.set(ref, {calls: recentCalls});
+  });
+}
+
 // ─── 1. Create Link Token ───────────────────────────────────────────
 // Called from Android to get a link_token for opening Plaid Link
 exports.createLinkToken = onCall(
@@ -57,6 +85,7 @@ exports.createLinkToken = onCall(
       }
 
       const userId = request.auth.uid;
+      await checkRateLimit(userId);
 
       try {
         const response = await getPlaidClient().linkTokenCreate({
@@ -100,6 +129,7 @@ exports.exchangePublicToken = onCall(
       }
 
       const userId = request.auth.uid;
+      await checkRateLimit(userId);
       const {publicToken, institutionName, institutionId} = request.data;
 
       if (!publicToken) {
@@ -160,6 +190,7 @@ exports.syncTransactions = onCall(
       }
 
       const userId = request.auth.uid;
+      await checkRateLimit(userId);
 
       try {
         // Get all Plaid items for this user
@@ -299,6 +330,7 @@ exports.unlinkAccount = onCall(
       }
 
       const userId = request.auth.uid;
+      await checkRateLimit(userId);
       const {itemId} = request.data;
 
       if (!itemId) {
