@@ -44,5 +44,20 @@
     <string name="update_transaction">Update Transaction</string>
     <string name="delete_transaction">Delete Transaction</string>
     <string name="error_missing_fields">Please fill in all fields.</string>
+    <string name="error_network">No internet connection. Please check your network and try again.</string>
+    <string name="error_invalid_credentials">Invalid email or password. Please try again.</string>
+    <string name="error_account_not_found">Account not found. Please check your email address.</string>
+    <string name="error_account_already_exists">An account with this email already exists.</string>
+    <string name="error_database">Unable to load data. Please try again later.</string>
+    <string name="error_sign_in_required">Please sign in to continue.</string>
+    <string name="error_bank_connection_expired">Your bank connection has expired. Please relink your account.</string>
+    <string name="error_plaid_link_failed">Unable to connect to your bank. Please try again.</string>
+    <string name="empty_dashboard">No expenses this month</string>
+    <string name="empty_transactions">No transactions this month.\nTap + to add one.</string>
+    <string name="empty_budgets">No budgets yet.\nTap + to create one.</string>
+    <string name="error_invalid_amount">Amount must be greater than zero</string>
+    <string name="error_amount_too_large">Amount cannot exceed $999,999.99</string>
+    <string name="error_description_too_long">Description cannot exceed 100 characters</string>
+    <string name="error_category_too_long">Category name cannot exceed 50 characters</string>
 
 </resources>

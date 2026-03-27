@@ -61,6 +61,21 @@ class AddBudgetViewModel @Inject constructor(
             return
         }
 
+        if (item.category.length > 50) {
+            showErrorSnackbar(ErrorMessage.IdError(R.string.error_category_too_long))
+            return
+        }
+
+        if (item.amount <= 0.0) {
+            showErrorSnackbar(ErrorMessage.IdError(R.string.error_invalid_amount))
+            return
+        }
+
+        if (item.amount > 999_999.99) {
+            showErrorSnackbar(ErrorMessage.IdError(R.string.error_amount_too_large))
+            return
+        }
+
         launchCatching {
             val newItem = item.copy(ownerId = ownerId)
             if (itemId.isBlank()) {

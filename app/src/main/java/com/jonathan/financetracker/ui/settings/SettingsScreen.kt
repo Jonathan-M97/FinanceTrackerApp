@@ -113,7 +113,11 @@ fun SettingsScreen(
                     )
                 }
                 is LinkExit -> {
-                    // User exited Plaid Link without connecting
+                    result.error?.let { error ->
+                        viewModel.onPlaidLinkError(
+                            error.displayMessage ?: error.errorMessage
+                        )
+                    }
                 }
             }
         }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -16,11 +17,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.Transaction
+import com.jonathan.financetracker.ui.components.EmptyStateMessage
+import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.MonthNavigator
 import com.jonathan.financetracker.ui.components.TransactionItem
 import kotlinx.serialization.Serializable
@@ -37,16 +41,21 @@ fun TransactionsScreen(
 ) {
     val transactions by viewModel.transactions.collectAsStateWithLifecycle()
     val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
-    TransactionsScreenContent(
-        transactions = transactions,
-        selectedMonth = selectedMonth,
-        onPreviousMonthClick = { viewModel.goToPreviousMonth() },
-        onNextMonthClick = { viewModel.goToNextMonth() },
-        canGoToNextMonth = viewModel.canGoToNextMonth(),
-        openAddTransactionScreen = openAddTransactionScreen,
-        modifier = modifier
-    )
+    if (isLoading) {
+        LoadingIndicator()
+    } else {
+        TransactionsScreenContent(
+            transactions = transactions,
+            selectedMonth = selectedMonth,
+            onPreviousMonthClick = { viewModel.goToPreviousMonth() },
+            onNextMonthClick = { viewModel.goToNextMonth() },
+            canGoToNextMonth = viewModel.canGoToNextMonth(),
+            openAddTransactionScreen = openAddTransactionScreen,
+            modifier = modifier
+        )
+    }
 }
 
 @Composable
@@ -80,15 +89,22 @@ fun TransactionsScreenContent(
                 modifier = Modifier.padding(vertical = dimensionResource(R.dimen.padding_small))
             )
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-                modifier = modifier.padding(horizontal = dimensionResource(R.dimen.padding_small))
-            ) {
-                items(transactions) { transaction ->
-                    TransactionItem(
-                        transaction = transaction,
-                        onItemClick = openAddTransactionScreen
-                    )
+            if (transactions.isEmpty()) {
+                EmptyStateMessage(
+                    message = stringResource(R.string.empty_transactions),
+                    icon = Icons.Default.Receipt
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+                    modifier = modifier.padding(horizontal = dimensionResource(R.dimen.padding_small))
+                ) {
+                    items(transactions) { transaction ->
+                        TransactionItem(
+                            transaction = transaction,
+                            onItemClick = openAddTransactionScreen
+                        )
+                    }
                 }
             }
         }

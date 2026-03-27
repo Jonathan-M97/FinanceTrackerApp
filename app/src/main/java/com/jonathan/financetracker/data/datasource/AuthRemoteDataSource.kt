@@ -32,17 +32,23 @@ class AuthRemoteDataSource @Inject constructor(private val auth: FirebaseAuth) {
 
     suspend fun linkAccount(email: String, password: String) {
         val credential = EmailAuthProvider.getCredential(email, password)
-        auth.currentUser!!.linkWithCredential(credential).await()
+        val user = auth.currentUser ?: throw IllegalStateException("No user signed in")
+        user.linkWithCredential(credential).await()
     }
 
     fun signOut() {
-        if (auth.currentUser!!.isAnonymous) {
-            auth.currentUser!!.delete()
+        val user = auth.currentUser ?: run {
+            auth.signOut()
+            return
+        }
+        if (user.isAnonymous) {
+            user.delete()
         }
         auth.signOut()
     }
 
     suspend fun deleteAccount() {
-        auth.currentUser!!.delete().await()
+        val user = auth.currentUser ?: throw IllegalStateException("No user signed in")
+        user.delete().await()
     }
 }
