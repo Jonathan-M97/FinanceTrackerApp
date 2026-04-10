@@ -32,4 +32,8 @@ class PlaidRepository @Inject constructor(
     suspend fun unlinkAccount(itemId: String) {
         plaidRemoteDataSource.unlinkAccount(itemId)
     }
+
+    suspend fun purgeSyncedTransactions(): Int {
+        return plaidRemoteDataSource.purgeSyncedTransactions()
+    }
 }

@@ -254,7 +254,7 @@ exports.syncTransactions = onCall(
               batch.set(docRef, {
                 description: txn.name || txn.merchant_name || "Unknown",
                 amount: Math.abs(txn.amount),
-                date: new Date(txn.date),
+                date: new Date(txn.date + "T12:00:00"),
                 type: txn.amount < 0 ? "Income" : "Expense",
                 methodOfPayment: txn.payment_channel || "Other",
                 budgetName: mapping ? mapping.budgetName : "",
@@ -401,3 +401,73 @@ exports.unlinkAccount = onCall(
       }
     },
 );
+
+// ─── 6. Purge Synced Transactions ──────────────────────────────────
+// Deletes all Plaid-synced transactions from the last 2 months for the
+// authenticated user and resets sync cursors so the next sync re-fetches.
+exports.purgeSyncedTransactions = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "User must be signed in.");
+  }
+
+  const userId = request.auth.uid;
+
+  try {
+    // 2-month cutoff
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 2);
+    cutoff.setDate(1); // Start of that month
+    cutoff.setHours(0, 0, 0, 0);
+
+    // Query Plaid-synced transactions within the window
+    const txnSnapshot = await db
+        .collection("transactions")
+        .where("ownerId", "==", userId)
+        .where("isManuallyCreated", "==", false)
+        .where("date", ">=", cutoff)
+        .get();
+
+    if (txnSnapshot.empty) {
+      return {deleted: 0, message: "No synced transactions found in the last 2 months."};
+    }
+
+    // Firestore batches support up to 500 operations
+    let deleted = 0;
+    let batch = db.batch();
+    let batchCount = 0;
+
+    txnSnapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+      batchCount++;
+      deleted++;
+
+      if (batchCount === 500) {
+        batch.commit();
+        batch = db.batch();
+        batchCount = 0;
+      }
+    });
+
+    if (batchCount > 0) {
+      await batch.commit();
+    }
+
+    // Reset cursors on all Plaid items so next sync re-fetches
+    const itemsSnapshot = await db
+        .collection("plaid_items")
+        .where("ownerId", "==", userId)
+        .get();
+
+    const cursorBatch = db.batch();
+    itemsSnapshot.forEach((doc) => {
+      cursorBatch.update(doc.ref, {cursor: null});
+    });
+    await cursorBatch.commit();
+
+    logger.info("Purged synced transactions", {userId, deleted});
+    return {deleted, message: `Deleted ${deleted} synced transactions. Sync again to re-fetch.`};
+  } catch (error) {
+    logger.error("Error purging transactions", {error: error.message});
+    throw new HttpsError("internal", "Failed to purge transactions.");
+  }
+});
