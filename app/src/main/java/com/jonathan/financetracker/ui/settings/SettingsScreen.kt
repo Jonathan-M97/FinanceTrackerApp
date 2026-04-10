@@ -65,6 +65,7 @@ object SettingsRoute
 fun SettingsScreen(
     openDashboard: () -> Unit,
     openSignInScreen: () -> Unit,
+    openCategoryMapping: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val shouldRestartApp by viewModel.shouldRestartApp.collectAsStateWithLifecycle()
@@ -136,6 +137,7 @@ fun SettingsScreen(
             loadCurrentUser = viewModel::loadCurrentUser,
             loadLinkedAccounts = viewModel::loadLinkedAccounts,
             openSignInScreen = openSignInScreen,
+            openCategoryMapping = openCategoryMapping,
             signOut = viewModel::signOut,
             deleteAccount = viewModel::deleteAccount,
             isAnonymous = isAnonymous,
@@ -156,6 +158,7 @@ fun SettingsScreenContent(
     loadCurrentUser: () -> Unit,
     loadLinkedAccounts: () -> Unit,
     openSignInScreen: () -> Unit,
+    openCategoryMapping: () -> Unit,
     signOut: () -> Unit,
     deleteAccount: () -> Unit,
     isAnonymous: Boolean,
@@ -280,6 +283,13 @@ fun SettingsScreenContent(
                         )
                     }
                 }
+
+                Spacer(Modifier.size(8.dp))
+
+                StandardButton(
+                    label = R.string.manage_category_mapping,
+                    onButtonClick = openCategoryMapping
+                )
 
                 Spacer(Modifier.size(24.dp))
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp))
@@ -420,6 +430,7 @@ fun SettingsScreenPreview() {
             loadCurrentUser = {},
             loadLinkedAccounts = {},
             openSignInScreen = {},
+            openCategoryMapping = {},
             signOut = {},
             deleteAccount = {},
             isAnonymous = false,

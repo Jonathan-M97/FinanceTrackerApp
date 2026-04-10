@@ -29,6 +29,8 @@ import com.jonathan.financetracker.ui.addBudget.AddBudgetRoute
 import com.jonathan.financetracker.ui.addBudget.AddBudgetScreen
 import com.jonathan.financetracker.ui.addtransaction.AddTransactionRoute
 import com.jonathan.financetracker.ui.addtransaction.AddTransactionScreen
+import com.jonathan.financetracker.ui.categoryMapping.CategoryMappingRoute
+import com.jonathan.financetracker.ui.categoryMapping.CategoryMappingScreen
 import com.jonathan.financetracker.ui.components.BottomNavBar
 import com.jonathan.financetracker.ui.components.MainTabsPager
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
@@ -96,6 +98,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     openSignInScreen = {
                                         navController.navigate(LoginRoute) { launchSingleTop = true }
+                                    },
+                                    openCategoryMapping = {
+                                        navController.navigate(CategoryMappingRoute) { launchSingleTop = true }
                                     }
                                 )
                             }
@@ -123,6 +128,7 @@ class MainActivity : ComponentActivity() {
                                     scope.launch { snackbarHostState.showSnackbar(message) }
                                 }
                             ) }
+                            composable<CategoryMappingRoute> { CategoryMappingScreen() }
                             composable<LoginRoute> { LoginScreen(
                                 openDashboard = {
                                     navController.navigate(MainTabsRoute) {
