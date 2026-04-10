@@ -60,4 +60,11 @@
     <string name="error_description_too_long">Description cannot exceed 100 characters</string>
     <string name="error_category_too_long">Category name cannot exceed 50 characters</string>
 
+    <!-- Category Mapping -->
+    <string name="category_mapping">Category Mapping</string>
+    <string name="category_mapping_description">Link Plaid bank categories to your budgets. Synced transactions will be automatically assigned to the matching budget.</string>
+    <string name="save_mappings">Save Mappings</string>
+    <string name="manage_category_mapping">Manage Category Mapping</string>
+    <string name="linked_plaid_categories">Linked Plaid Categories</string>
+
 </resources>

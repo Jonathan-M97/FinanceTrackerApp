@@ -16,6 +16,7 @@ fun MainTabsPager(
     openAddBudgetScreen: (String) -> Unit,
     openDashboard: () -> Unit,
     openSignInScreen: () -> Unit,
+    openCategoryMapping: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     HorizontalPager(
@@ -32,7 +33,8 @@ fun MainTabsPager(
             )
             3 -> SettingsScreen(
                 openDashboard = openDashboard,
-                openSignInScreen = openSignInScreen
+                openSignInScreen = openSignInScreen,
+                openCategoryMapping = openCategoryMapping
             )
         }
     }

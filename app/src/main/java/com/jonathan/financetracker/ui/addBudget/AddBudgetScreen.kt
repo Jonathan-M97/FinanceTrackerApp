@@ -2,17 +2,22 @@ package com.jonathan.financetracker.ui.addBudget
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -33,6 +38,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -67,13 +73,17 @@ fun AddBudgetScreen(
         openBudget()
     } else {
         val budgetItem by viewModel.budgetItem.collectAsStateWithLifecycle()
+        val linkedCategories by viewModel.linkedCategories.collectAsStateWithLifecycle()
 
         AddBudgetScreen(
             budgetItem = budgetItem,
             showErrorSnackbar = showErrorSnackbar,
             saveItem = viewModel::saveItem,
             deleteItem = viewModel::deleteItem,
-            loadItem = viewModel::loadItem
+            loadItem = viewModel::loadItem,
+            plaidCategories = viewModel.plaidCategories,
+            linkedCategories = linkedCategories,
+            onTogglePlaidCategory = viewModel::togglePlaidCategory
         )
     }
 }
@@ -84,7 +94,10 @@ fun AddBudgetScreen(
     showErrorSnackbar: (ErrorMessage) -> Unit,
     saveItem: (Budget, (ErrorMessage) -> Unit) -> Unit,
     deleteItem: (Budget, (ErrorMessage) -> Unit) -> Unit,
-    loadItem: () -> Unit
+    loadItem: () -> Unit,
+    plaidCategories: List<String>,
+    linkedCategories: Set<String>,
+    onTogglePlaidCategory: (String) -> Unit
 ) {
     if (budgetItem == null) {
         LoadingIndicator()
@@ -93,7 +106,10 @@ fun AddBudgetScreen(
             budgetItem = budgetItem,
             showErrorSnackbar = showErrorSnackbar,
             saveItem = saveItem,
-            deleteItem = deleteItem
+            deleteItem = deleteItem,
+            plaidCategories = plaidCategories,
+            linkedCategories = linkedCategories,
+            onTogglePlaidCategory = onTogglePlaidCategory
         )
     }
 
@@ -101,13 +117,16 @@ fun AddBudgetScreen(
         loadItem()
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddBudgetScreenContent(
     budgetItem: Budget,
     showErrorSnackbar: (ErrorMessage) -> Unit,
     saveItem: (Budget, (ErrorMessage) -> Unit) -> Unit,
-    deleteItem: (Budget, (ErrorMessage) -> Unit) -> Unit
+    deleteItem: (Budget, (ErrorMessage) -> Unit) -> Unit,
+    plaidCategories: List<String>,
+    linkedCategories: Set<String>,
+    onTogglePlaidCategory: (String) -> Unit
 ) {
     val editableItem = remember { mutableStateOf(budgetItem) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -170,6 +189,42 @@ fun AddBudgetScreenContent(
                         }
                     }
             )
+
+            // Plaid category linking section (only when editing)
+            if (budgetItem.id != null) {
+                Spacer(Modifier.size(8.dp))
+                HorizontalDivider()
+                Spacer(Modifier.size(8.dp))
+
+                Text(
+                    stringResource(R.string.linked_plaid_categories),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    stringResource(R.string.category_mapping_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.size(8.dp))
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    plaidCategories.forEach { category ->
+                        FilterChip(
+                            selected = linkedCategories.contains(category),
+                            onClick = { onTogglePlaidCategory(category) },
+                            label = { Text(category) }
+                        )
+                    }
+                }
+
+                Spacer(Modifier.size(8.dp))
+                HorizontalDivider()
+            }
+
+            Spacer(Modifier.size(8.dp))
 
             StandardButton(
                 label = if (budgetItem.id == null) R.string.add_budget else R.string.update_budget,

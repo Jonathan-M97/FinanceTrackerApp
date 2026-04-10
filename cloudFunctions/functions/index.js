@@ -205,6 +205,16 @@ exports.syncTransactions = onCall(
 
         let totalAdded = 0;
 
+        // Fetch user's Plaid category-to-budget mappings
+        const mappingSnapshot = await db
+            .collection("plaid_category_mappings")
+            .where("ownerId", "==", userId)
+            .limit(1)
+            .get();
+        const categoryMappings = mappingSnapshot.empty
+            ? {}
+            : (mappingSnapshot.docs[0].data().mappings || {});
+
         // 60-day cutoff for transaction history
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - 60);
@@ -232,6 +242,14 @@ exports.syncTransactions = onCall(
 
               const yearMonth = txn.date.substring(0, 7); // "yyyy-MM"
 
+              // Apply category-to-budget mapping
+              const topLevelCategory = txn.category
+                  ? txn.category[0]
+                  : null;
+              const mapping = topLevelCategory
+                  ? categoryMappings[topLevelCategory]
+                  : null;
+
               const docRef = db.collection("transactions").doc();
               batch.set(docRef, {
                 description: txn.name || txn.merchant_name || "Unknown",
@@ -239,8 +257,8 @@ exports.syncTransactions = onCall(
                 date: new Date(txn.date + "T12:00:00Z"),
                 type: txn.amount < 0 ? "Income" : "Expense",
                 methodOfPayment: txn.payment_channel || "Other",
-                budgetName: "",
-                budgetId: "",
+                budgetName: mapping ? mapping.budgetName : "",
+                budgetId: mapping ? mapping.budgetId : "",
                 ownerId: userId,
                 yearMonth: yearMonth,
                 isManuallyCreated: false,
