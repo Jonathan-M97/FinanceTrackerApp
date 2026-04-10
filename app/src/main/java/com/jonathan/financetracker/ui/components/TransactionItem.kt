@@ -108,6 +108,19 @@ fun TransactionItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    if (transaction.budgetName.isBlank()) {
+                        Text(
+                            text = "·",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Text(
+                            text = "Uncategorized",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
 
