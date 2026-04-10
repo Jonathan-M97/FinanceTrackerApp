@@ -75,8 +75,15 @@ class PlaidRemoteDataSource @Inject constructor(
             return result.getData() as? Map<String, Any>
                 ?: throw Exception("Invalid response from $name")
         } catch (e: FirebaseFunctionsException) {
-            // Re-throw with the server's error message (contains Plaid error codes)
-            throw Exception(e.message ?: "Cloud function $name failed", e)
+            // Surface specific messages for known error codes
+            val message = when (e.code) {
+                FirebaseFunctionsException.Code.RESOURCE_EXHAUSTED ->
+                    "Too many requests. Please wait a few minutes before trying again."
+                FirebaseFunctionsException.Code.UNAUTHENTICATED ->
+                    "You must be signed in to use this feature."
+                else -> e.message ?: "Cloud function $name failed"
+            }
+            throw Exception(message, e)
         }
     }
 }

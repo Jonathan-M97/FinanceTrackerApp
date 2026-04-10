@@ -44,7 +44,7 @@ function getPlaidErrorMessage(error, fallback) {
 // ─── Rate Limiting ──────────────────────────────────────────────────
 // Limits each user to 10 Plaid API calls per hour.
 // Tracks timestamps in rate_limits/{userId} using a Firestore transaction.
-const RATE_LIMIT_MAX_CALLS = 10;
+const RATE_LIMIT_MAX_CALLS = 30;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 async function checkRateLimit(userId) {
@@ -73,7 +73,7 @@ async function checkRateLimit(userId) {
 // Called from Android to get a link_token for opening Plaid Link
 exports.createLinkToken = onCall(
     {
-      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET"],
+      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ENV"],
     },
     async (request) => {
       // Ensure user is authenticated
@@ -118,7 +118,7 @@ exports.createLinkToken = onCall(
 // for a permanent access_token and stores it in Firestore
 exports.exchangePublicToken = onCall(
     {
-      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET"],
+      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ENV"],
     },
     async (request) => {
       if (!request.auth) {
@@ -179,7 +179,7 @@ exports.exchangePublicToken = onCall(
 // them to the user's transactions collection in Firestore
 exports.syncTransactions = onCall(
     {
-      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET"],
+      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ENV"],
     },
     async (request) => {
       if (!request.auth) {
@@ -322,7 +322,7 @@ exports.getLinkedAccounts = onCall(async (request) => {
 // Removes a linked bank account and its synced transactions
 exports.unlinkAccount = onCall(
     {
-      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET"],
+      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ENV"],
     },
     async (request) => {
       if (!request.auth) {
@@ -345,10 +345,17 @@ exports.unlinkAccount = onCall(
           throw new HttpsError("not-found", "Linked account not found.");
         }
 
-        // Remove from Plaid
-        await getPlaidClient().itemRemove({
-          access_token: itemDoc.data().accessToken,
-        });
+        // Remove from Plaid (ignore errors for tokens from a different environment)
+        try {
+          await getPlaidClient().itemRemove({
+            access_token: itemDoc.data().accessToken,
+          });
+        } catch (plaidError) {
+          logger.warn("Plaid itemRemove failed (stale token?), cleaning up locally", {
+            itemId,
+            plaidCode: plaidError.response?.data?.error_code,
+          });
+        }
 
         // Delete synced transactions from this item
         const txnSnapshot = await db
