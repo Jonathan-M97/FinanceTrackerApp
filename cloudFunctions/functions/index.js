@@ -254,7 +254,7 @@ exports.syncTransactions = onCall(
               batch.set(docRef, {
                 description: txn.name || txn.merchant_name || "Unknown",
                 amount: Math.abs(txn.amount),
-                date: new Date(txn.date + "T12:00:00Z"),
+                date: new Date(txn.date + "T12:00:00"),
                 type: txn.amount < 0 ? "Income" : "Expense",
                 methodOfPayment: txn.payment_channel || "Other",
                 budgetName: mapping ? mapping.budgetName : "",
@@ -401,63 +401,3 @@ exports.unlinkAccount = onCall(
       }
     },
 );
-
-
-// ─── 6. Fix Plaid Transaction Dates (One-Time Migration) ────────────
-// Fixes Plaid transactions stored with midnight UTC timestamps.
-// Shifts them to noon UTC so timezone conversion never changes the day.
-exports.fixPlaidTransactionDates = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "User must be signed in.");
-  }
-
-  const userId = request.auth.uid;
-
-  try {
-    const snapshot = await db
-        .collection("transactions")
-        .where("ownerId", "==", userId)
-        .where("isManuallyCreated", "==", false)
-        .get();
-
-    if (snapshot.empty) {
-      return {fixed: 0, message: "No Plaid transactions found."};
-    }
-
-    const batch = db.batch();
-    let fixedCount = 0;
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const date = data.date.toDate(); // Firebase Timestamp → JS Date
-
-      // Only fix dates at midnight UTC (hour 0)
-      if (date.getUTCHours() === 0 && date.getUTCMinutes() === 0) {
-        // Shift to noon UTC
-        const fixedDate = new Date(date);
-        fixedDate.setUTCHours(12, 0, 0, 0);
-
-        // Recalculate yearMonth from the corrected date
-        const year = fixedDate.getUTCFullYear();
-        const month = String(fixedDate.getUTCMonth() + 1).padStart(2, "0");
-        const yearMonth = `${year}-${month}`;
-
-        batch.update(doc.ref, {
-          date: fixedDate,
-          yearMonth: yearMonth,
-        });
-        fixedCount++;
-      }
-    });
-
-    if (fixedCount > 0) {
-      await batch.commit();
-    }
-
-    logger.info("Fixed Plaid transaction dates", {userId, fixedCount});
-    return {fixed: fixedCount, message: `Fixed ${fixedCount} transactions.`};
-  } catch (error) {
-    logger.error("Error fixing transaction dates", {error: error.message});
-    throw new HttpsError("internal", "Failed to fix transaction dates.");
-  }
-});

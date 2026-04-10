@@ -54,6 +54,11 @@ class PlaidRemoteDataSource @Inject constructor(
         callFunction("unlinkAccount", hashMapOf("itemId" to itemId))
     }
 
+    suspend fun purgeSyncedTransactions(): Int {
+        val data = callFunction("purgeSyncedTransactions")
+        return (data["deleted"] as? Number)?.toInt() ?: 0
+    }
+
     /**
      * Calls a Firebase Cloud Function and returns the result data as a Map.
      * Extracts the error message from FirebaseFunctionsException so that

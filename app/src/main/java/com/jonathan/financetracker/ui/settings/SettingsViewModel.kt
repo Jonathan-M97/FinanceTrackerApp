@@ -149,4 +149,16 @@ class SettingsViewModel @Inject constructor(
             loadLinkedAccounts()
         }
     }
+
+    fun purgeSyncedTransactions() {
+        launchCatching(::showPlaidError) {
+            _isSyncing.value = true
+            try {
+                val count = plaidRepository.purgeSyncedTransactions()
+                _syncResultMessage.value = "Deleted $count synced transactions. Sync again to re-fetch."
+            } finally {
+                _isSyncing.value = false
+            }
+        }
+    }
 }

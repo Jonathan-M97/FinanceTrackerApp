@@ -50,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.LinkedAccount
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
+import com.jonathan.financetracker.ui.components.DeleteButton
 import com.jonathan.financetracker.ui.components.StandardButton
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 import com.plaid.link.OpenPlaidLink
@@ -146,6 +147,7 @@ fun SettingsScreen(
             onLinkBankAccount = viewModel::createLinkToken,
             onSyncTransactions = viewModel::syncTransactions,
             onUnlinkAccount = viewModel::unlinkAccount,
+            onPurgeSyncedTransactions = viewModel::purgeSyncedTransactions,
             isSyncing = isSyncing,
             snackbarHostState = snackbarHostState
         )
@@ -167,6 +169,7 @@ fun SettingsScreenContent(
     onLinkBankAccount: () -> Unit,
     onSyncTransactions: () -> Unit,
     onUnlinkAccount: (String) -> Unit,
+    onPurgeSyncedTransactions: () -> Unit,
     isSyncing: Boolean,
     snackbarHostState: SnackbarHostState
 ) {
@@ -286,6 +289,10 @@ fun SettingsScreenContent(
 
                 Spacer(Modifier.size(8.dp))
 
+                PurgeSyncedTransactionsButton(onPurgeSyncedTransactions)
+
+                Spacer(Modifier.size(8.dp))
+
                 StandardButton(
                     label = R.string.manage_category_mapping,
                     onButtonClick = openCategoryMapping
@@ -371,6 +378,43 @@ fun LinkedAccountItem(
 }
 
 @Composable
+fun PurgeSyncedTransactionsButton(onPurge: () -> Unit) {
+    var showPurgeDialog by remember { mutableStateOf(false) }
+
+    DeleteButton(
+        label = R.string.purge_synced_transactions,
+        onButtonClick = { showPurgeDialog = true }
+    )
+
+    if (showPurgeDialog) {
+        AlertDialog(
+            containerColor = MaterialTheme.colorScheme.surface,
+            textContentColor = MaterialTheme.colorScheme.onSurface,
+            titleContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            title = { Text(stringResource(R.string.purge_synced_transactions_title)) },
+            text = { Text(stringResource(R.string.purge_synced_transactions_description)) },
+            dismissButton = {
+                TextButton(onClick = { showPurgeDialog = false }) {
+                    Text(text = stringResource(R.string.cancel), fontSize = 16.sp)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showPurgeDialog = false
+                        onPurge()
+                    },
+                    colors = getDialogButtonColors()
+                ) {
+                    Text(text = stringResource(R.string.purge), fontSize = 16.sp)
+                }
+            },
+            onDismissRequest = { showPurgeDialog = false }
+        )
+    }
+}
+
+@Composable
 fun DeleteAccountButton(deleteAccount: () -> Unit) {
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
 
@@ -442,6 +486,7 @@ fun SettingsScreenPreview() {
             onLinkBankAccount = {},
             onSyncTransactions = {},
             onUnlinkAccount = {},
+            onPurgeSyncedTransactions = {},
             isSyncing = false,
             snackbarHostState = SnackbarHostState()
         )
