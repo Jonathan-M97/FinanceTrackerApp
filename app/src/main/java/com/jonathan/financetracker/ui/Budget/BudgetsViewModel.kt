@@ -2,6 +2,7 @@ package com.jonathan.financetracker.ui.Budget
 
 import androidx.lifecycle.viewModelScope
 import com.jonathan.financetracker.MainViewModel
+import com.jonathan.financetracker.data.SharedMonthState
 import com.jonathan.financetracker.data.repository.AuthRepository
 import com.jonathan.financetracker.data.repository.BudgetRepository
 import com.jonathan.financetracker.data.repository.TransactionRepository
@@ -20,12 +21,11 @@ import java.time.YearMonth
 class BudgetsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val budgetRepository: BudgetRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val sharedMonthState: SharedMonthState,
 ) : MainViewModel() {
 
-    // State for the selected month
-    private val _selectedMonth = MutableStateFlow(YearMonth.now())
-    val selectedMonth: StateFlow<YearMonth> = _selectedMonth.asStateFlow()
+    val selectedMonth: StateFlow<YearMonth> = sharedMonthState.selectedMonth
 
     // State for if the user is loaded
     private val _isLoadingUser = MutableStateFlow(true)
@@ -54,19 +54,9 @@ class BudgetsViewModel @Inject constructor(
     val budgets = budgetRepository.getBudgets(authRepository.currentUserIdFlow)
         .onEach { _isLoadingData.value = false }
 
-    // --- Functions to change the month ---
-    fun goToNextMonth() {
-        _selectedMonth.value = _selectedMonth.value.plusMonths(1)
-    }
-
-    fun goToPreviousMonth() {
-        _selectedMonth.value = _selectedMonth.value.minusMonths(1)
-    }
-
-    fun canGoToNextMonth(): Boolean {
-        // Prevent navigating into the future
-        return _selectedMonth.value.isBefore(YearMonth.now())
-    }
+    fun goToNextMonth() = sharedMonthState.goToNextMonth()
+    fun goToPreviousMonth() = sharedMonthState.goToPreviousMonth()
+    fun canGoToNextMonth() = sharedMonthState.canGoToNextMonth()
     fun loadCurrentUser() {
         launchCatching {
             if (authRepository.currentUser == null) {

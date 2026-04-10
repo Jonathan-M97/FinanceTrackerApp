@@ -1,6 +1,7 @@
 package com.jonathan.financetracker.ui.Dashboard
 
 import androidx.lifecycle.viewModelScope
+import com.jonathan.financetracker.data.SharedMonthState
 import com.jonathan.financetracker.data.repository.AuthRepository
 import com.jonathan.financetracker.data.repository.TransactionRepository
 import com.jonathan.financetracker.MainViewModel
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class DashboardViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val transactionRepository: TransactionRepository,
+    private val sharedMonthState: SharedMonthState,
 ) : MainViewModel() {
 
     private val _isLoadingUser = MutableStateFlow(true)
@@ -28,8 +30,7 @@ class DashboardViewModel @Inject constructor(
     val isAnonymous: StateFlow<Boolean>
         get() = _isAnonymous.asStateFlow()
 
-    private val _selectedMonth = MutableStateFlow(YearMonth.now())
-    val selectedMonth: StateFlow<YearMonth> = _selectedMonth.asStateFlow()
+    val selectedMonth: StateFlow<YearMonth> = sharedMonthState.selectedMonth
 
     private val _isLoadingData = MutableStateFlow(true)
     val isLoadingData: StateFlow<Boolean> = _isLoadingData.asStateFlow()
@@ -49,24 +50,16 @@ class DashboardViewModel @Inject constructor(
     val totalMonthlySpentAmount: StateFlow<Double> =
         transactionRepository.getTotalMonthlySpentAmount(
             currentUserIdFlow = authRepository.currentUserIdFlow,
-            yearMonth = _selectedMonth
+            yearMonth = selectedMonth
         ).stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = 0.0
         )
 
-    fun goToNextMonth() {
-        _selectedMonth.value = _selectedMonth.value.plusMonths(1)
-    }
-
-    fun goToPreviousMonth() {
-        _selectedMonth.value = _selectedMonth.value.minusMonths(1)
-    }
-
-    fun canGoToNextMonth(): Boolean {
-        return _selectedMonth.value.isBefore(YearMonth.now())
-    }
+    fun goToNextMonth() = sharedMonthState.goToNextMonth()
+    fun goToPreviousMonth() = sharedMonthState.goToPreviousMonth()
+    fun canGoToNextMonth() = sharedMonthState.canGoToNextMonth()
 
     fun loadCurrentUser() {
         launchCatching {

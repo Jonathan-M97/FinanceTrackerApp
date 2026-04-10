@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -22,12 +23,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jonathan.financetracker.data.model.ErrorMessage
-import com.jonathan.financetracker.ui.Budget.BudgetRoute
-import com.jonathan.financetracker.ui.Budget.BudgetsScreen
-import com.jonathan.financetracker.ui.Dashboard.DashboardRoute
-import com.jonathan.financetracker.ui.Dashboard.DashboardScreen
-import com.jonathan.financetracker.ui.Transactions.TransactionsRoute
-import com.jonathan.financetracker.ui.Transactions.TransactionsScreen
 import com.jonathan.financetracker.ui.ExamplePage
 import com.jonathan.financetracker.ui.ExampleScreen
 import com.jonathan.financetracker.ui.addBudget.AddBudgetRoute
@@ -35,12 +30,15 @@ import com.jonathan.financetracker.ui.addBudget.AddBudgetScreen
 import com.jonathan.financetracker.ui.addtransaction.AddTransactionRoute
 import com.jonathan.financetracker.ui.addtransaction.AddTransactionScreen
 import com.jonathan.financetracker.ui.components.BottomNavBar
-import com.jonathan.financetracker.ui.settings.SettingsRoute
-import com.jonathan.financetracker.ui.settings.SettingsScreen
+import com.jonathan.financetracker.ui.components.MainTabsPager
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
+
+@Serializable
+object MainTabsRoute
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -55,15 +53,9 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
+            val pagerState = rememberPagerState(pageCount = { 4 })
 
-            // Define which screens show the bottom bar
-            val showBottomBar = currentDestination?.let {
-                    it.hasRoute<DashboardRoute>() ||
-                            it.hasRoute<TransactionsRoute>() ||
-                            it.hasRoute<BudgetRoute>() ||
-                        it.hasRoute<SettingsRoute>()
-                // Add TransactionsRoute here once you build it
-            } ?: false
+            val showBottomBar = currentDestination?.hasRoute<MainTabsRoute>() ?: false
 
             FinanceTrackerTheme {
                 Surface(
@@ -75,12 +67,10 @@ class MainActivity : ComponentActivity() {
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         bottomBar = {
                             if (showBottomBar) {
-                                BottomNavBar(currentDestination = currentDestination,
-                                    onNavigate = { route ->
-                                        navController.navigate(route) {
-                                            popUpTo(DashboardRoute) { inclusive = route is DashboardRoute }
-                                            launchSingleTop = true
-                                        }
+                                BottomNavBar(
+                                    selectedIndex = pagerState.currentPage,
+                                    onTabSelected = { index ->
+                                        scope.launch { pagerState.animateScrollToPage(index) }
                                     }
                                 )
                             }
@@ -88,22 +78,30 @@ class MainActivity : ComponentActivity() {
                     ) { innerPadding ->
                         NavHost(
                             navController = navController,
-                            startDestination = DashboardRoute,
+                            startDestination = MainTabsRoute,
                             modifier = Modifier.padding(innerPadding)
                         ) {
-
-                            composable<ExamplePage> { ExampleScreen(
-
-                            ) }
-                            composable<DashboardRoute> { DashboardScreen() }
-                            composable<TransactionsRoute> { TransactionsScreen(
-                                openAddTransactionScreen = { itemId ->
-                                    navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
-                                }
-                            ) }
+                            composable<ExamplePage> { ExampleScreen() }
+                            composable<MainTabsRoute> {
+                                MainTabsPager(
+                                    pagerState = pagerState,
+                                    openAddTransactionScreen = { itemId ->
+                                        navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
+                                    },
+                                    openAddBudgetScreen = { itemId ->
+                                        navController.navigate(AddBudgetRoute(itemId)) { launchSingleTop = true }
+                                    },
+                                    openDashboard = {
+                                        scope.launch { pagerState.animateScrollToPage(0) }
+                                    },
+                                    openSignInScreen = {
+                                        navController.navigate(LoginRoute) { launchSingleTop = true }
+                                    }
+                                )
+                            }
                             composable<AddTransactionRoute> { AddTransactionScreen(
                                 openDashboard = {
-                                    navController.navigate(TransactionsRoute) { launchSingleTop = true }
+                                    navController.navigate(MainTabsRoute) { launchSingleTop = true }
                                 },
                                 showErrorSnackbar = { errorMessage ->
                                     val message = getErrorMessage(errorMessage)
@@ -112,35 +110,25 @@ class MainActivity : ComponentActivity() {
                             ) }
                             composable<AddBudgetRoute> { AddBudgetScreen(
                                 openDashboard = {
-                                    navController.navigate(DashboardRoute) { launchSingleTop = true }
+                                    navController.navigate(MainTabsRoute) { launchSingleTop = true }
                                 },
                                 openBudget = {
-                                    navController.navigate(BudgetRoute) { launchSingleTop = true }
+                                    navController.navigate(MainTabsRoute) {
+                                        launchSingleTop = true
+                                    }
+                                    scope.launch { pagerState.scrollToPage(2) }
                                 },
                                 showErrorSnackbar = { errorMessage ->
                                     val message = getErrorMessage(errorMessage)
                                     scope.launch { snackbarHostState.showSnackbar(message) }
                                 }
                             ) }
-                            composable<BudgetRoute> { BudgetsScreen(
-                                openAddTransactionScreen = { itemId ->
-                                    navController.navigate(AddTransactionRoute(itemId)) { launchSingleTop = true }
-                                },
-                                openAddBudgetScreen = { itemId ->
-                                    navController.navigate(AddBudgetRoute(itemId)) { launchSingleTop = true }
-                                }
-                            ) }
-                            composable<SettingsRoute> { SettingsScreen(
-                                openDashboard = {
-                                    navController.navigate(DashboardRoute) { launchSingleTop = true }
-                                },
-                                openSignInScreen = {
-                                    navController.navigate(LoginRoute) { launchSingleTop = true }
-                                }
-                            ) }
                             composable<LoginRoute> { LoginScreen(
                                 openDashboard = {
-                                    navController.navigate(DashboardRoute) { launchSingleTop = true }
+                                    navController.navigate(MainTabsRoute) {
+                                        launchSingleTop = true
+                                        popUpTo(MainTabsRoute) { inclusive = true }
+                                    }
                                 },
                                 showErrorSnackbar = { errorMessage ->
                                     val message = getErrorMessage(errorMessage)

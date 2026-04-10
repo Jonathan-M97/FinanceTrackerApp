@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -25,31 +24,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.jonathan.financetracker.ui.settings.SettingsRoute
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hasRoute
-import com.jonathan.financetracker.ui.Budget.BudgetRoute
-import com.jonathan.financetracker.ui.Dashboard.DashboardRoute
-import com.jonathan.financetracker.ui.Transactions.TransactionsRoute
 
-data class BottomNavItem<T : Any>(
+data class BottomNavItem(
     val label: String,
-    val icon: ImageVector,
-    val route: T
+    val icon: ImageVector
 )
 
 @Composable
 fun BottomNavBar(
-    currentDestination: NavDestination?,
-    onNavigate: (Any) -> Unit
+    selectedIndex: Int,
+    onTabSelected: (Int) -> Unit
 ) {
     val items = listOf(
-        BottomNavItem("Home", Icons.Default.Home, DashboardRoute),
-        BottomNavItem("Transactions", Icons.Default.List, TransactionsRoute),
-        BottomNavItem("Budgets", Icons.Default.AttachMoney, BudgetRoute),
-        BottomNavItem("Settings", Icons.Default.Settings, SettingsRoute)
+        BottomNavItem("Home", Icons.Default.Home),
+        BottomNavItem("Transactions", Icons.Default.List),
+        BottomNavItem("Budgets", Icons.Default.AttachMoney),
+        BottomNavItem("Settings", Icons.Default.Settings)
     )
-
 
     Row(
         modifier = Modifier
@@ -60,14 +51,8 @@ fun BottomNavBar(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        items.forEach { item ->
-            val isSelected = when (item.route) {
-                is DashboardRoute -> currentDestination?.hasRoute<DashboardRoute>() == true
-                is TransactionsRoute -> currentDestination?.hasRoute<TransactionsRoute>() == true
-                is BudgetRoute -> currentDestination?.hasRoute<BudgetRoute>() == true
-                is SettingsRoute -> currentDestination?.hasRoute<SettingsRoute>() == true
-                else -> false
-            }
+        items.forEachIndexed { index, item ->
+            val isSelected = index == selectedIndex
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
@@ -76,7 +61,7 @@ fun BottomNavBar(
                         if (isSelected) MaterialTheme.colorScheme.tertiaryContainer
                         else Color.Transparent
                     )
-                    .clickable { onNavigate(item.route) }
+                    .clickable { onTabSelected(index) }
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 Icon(
@@ -95,37 +80,4 @@ fun BottomNavBar(
             }
         }
     }
-//    NavigationBar(
-//        modifier = Modifier.height(78.dp),
-////        windowInsets = WindowInsets(0.dp)
-//    ) {
-//        items.forEach { item ->
-//            NavigationBarItem(
-//                selected = when (item.route) {
-//                    is DashboardRoute -> currentDestination?.hasRoute<DashboardRoute>() == true
-//                    is BudgetRoute -> currentDestination?.hasRoute<BudgetRoute>() == true
-//                    else -> false
-//                },
-//                onClick = { onNavigate(item.route) },
-//                icon = { Icon(item.icon, contentDescription = item.label, modifier = Modifier.size(20.dp)) },
-//                label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
-//                alwaysShowLabel = true
-//            )
-//        }
-//    }
-//    NavigationBar {
-//        items.forEach { item ->
-//            NavigationBarItem(
-//                selected = when (item.route) {
-//                    is DashboardRoute -> currentDestination?.hasRoute<DashboardRoute>() == true
-//                    is BudgetRoute -> currentDestination?.hasRoute<BudgetRoute>() == true
-//                    is SettingsRoute -> currentDestination?.hasRoute<SettingsRoute>() == true
-//                    else -> false
-//                },
-//                onClick = { onNavigate(item.route) },
-//                icon = { Icon(item.icon, contentDescription = item.label) },
-//                label = { Text(item.label) }
-//            )
-//        }
-//    }
 }
