@@ -25,7 +25,7 @@ fun MainTabsPager(
         beyondViewportPageCount = 1
     ) { page ->
         when (page) {
-            0 -> DashboardScreen()
+            0 -> DashboardScreen(openAddTransactionScreen = openAddTransactionScreen)
             1 -> TransactionsScreen(openAddTransactionScreen = openAddTransactionScreen)
             2 -> BudgetsScreen(
                 openAddTransactionScreen = openAddTransactionScreen,

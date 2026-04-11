@@ -6,10 +6,12 @@ import com.jonathan.financetracker.data.repository.AuthRepository
 import com.jonathan.financetracker.data.repository.TransactionRepository
 import com.jonathan.financetracker.MainViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.jonathan.financetracker.data.model.Transaction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import java.time.YearMonth
@@ -65,6 +67,17 @@ class DashboardViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = 0.0
+        )
+
+    val recentTransactions: StateFlow<List<Transaction>> =
+        transactionRepository.getMonthlyTransactions(
+            currentUserIdFlow = authRepository.currentUserIdFlow,
+            yearMonth = selectedMonth
+        ).map { it.take(5) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
         )
 
     fun goToNextMonth() = sharedMonthState.goToNextMonth()
