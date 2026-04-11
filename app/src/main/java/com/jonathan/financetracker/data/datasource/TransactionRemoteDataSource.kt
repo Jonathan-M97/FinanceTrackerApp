@@ -135,6 +135,30 @@ class TransactionRemoteDataSource @Inject constructor(
             awaitClose { listener.remove() }
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getTotalMonthlyIncomeAmount(userId: String, ym: YearMonth): Flow<Double> =
+        callbackFlow {
+            val ymString = ym.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"))
+
+            val listener = firestore.collection(TRANSACTION_COLLECTION)
+                .whereEqualTo(OWNER_ID_FIELD, userId)
+                .whereEqualTo(YEAR_MONTH_FIELD, ymString)
+                .whereEqualTo("type", "Income")
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("TransactionsRepo", "Firestore snapshot error for userId=$userId, ym=$ym", error)
+                        close(error)
+                        return@addSnapshotListener
+                    }
+
+                    val transactions = snapshot?.toObjects(Transaction::class.java).orEmpty()
+                    val result: Double = transactions.sumOf { it.amount ?: 0.0 }
+                    trySend(result)
+                }
+
+            awaitClose { listener.remove() }
+        }
+
     companion object {
         private const val OWNER_ID_FIELD = "ownerId"
         private const val YEAR_MONTH_FIELD = "yearMonth"

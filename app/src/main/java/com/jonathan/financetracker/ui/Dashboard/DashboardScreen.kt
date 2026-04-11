@@ -1,9 +1,11 @@
 package com.jonathan.financetracker.ui.Dashboard
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,6 +26,7 @@ import com.jonathan.financetracker.ui.components.EmptyStateMessage
 import com.jonathan.financetracker.ui.components.ExpensePieChart
 import com.jonathan.financetracker.ui.components.LoadingIndicator
 import com.jonathan.financetracker.ui.components.MonthNavigator
+import com.jonathan.financetracker.ui.components.NetBalanceCard
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PieChart
 import com.jonathan.financetracker.ui.theme.FinanceTrackerTheme
@@ -46,6 +49,7 @@ fun DashboardScreen(
         val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
         val spentAmounts by viewModel.spentAmounts.collectAsStateWithLifecycle()
         val totalMonthlySpentAmount by viewModel.totalMonthlySpentAmount.collectAsStateWithLifecycle()
+        val totalMonthlyIncomeAmount by viewModel.totalMonthlyIncomeAmount.collectAsStateWithLifecycle()
         val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
         val isLoadingData by viewModel.isLoadingData.collectAsStateWithLifecycle()
 
@@ -54,6 +58,7 @@ fun DashboardScreen(
             isLoadingData = isLoadingData,
             spentAmounts = spentAmounts,
             totalMonthlySpentAmount = totalMonthlySpentAmount,
+            totalMonthlyIncomeAmount = totalMonthlyIncomeAmount,
             selectedMonth = selectedMonth,
             onPreviousMonthClick = { viewModel.goToPreviousMonth() },
             onNextMonthClick = { viewModel.goToNextMonth() },
@@ -73,6 +78,7 @@ fun DashboardScreenContent(
     isLoadingData: Boolean,
     spentAmounts: Map<String, Double>,
     totalMonthlySpentAmount: Double,
+    totalMonthlyIncomeAmount: Double,
     selectedMonth: YearMonth,
     onPreviousMonthClick: () -> Unit,
     onNextMonthClick: () -> Unit,
@@ -104,6 +110,14 @@ fun DashboardScreenContent(
                 canGoToNext = canGoToNextMonth,
                 modifier = Modifier.padding(vertical = dimensionResource(R.dimen.padding_small))
             )
+
+            NetBalanceCard(
+                totalIncome = totalMonthlyIncomeAmount,
+                totalExpenses = totalMonthlySpentAmount,
+                modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_small))
+            )
+
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_small)))
 
             if (isLoadingData) {
                 LoadingIndicator()

@@ -57,6 +57,16 @@ class DashboardViewModel @Inject constructor(
             initialValue = 0.0
         )
 
+    val totalMonthlyIncomeAmount: StateFlow<Double> =
+        transactionRepository.getTotalMonthlyIncomeAmount(
+            currentUserIdFlow = authRepository.currentUserIdFlow,
+            yearMonth = selectedMonth
+        ).stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0.0
+        )
+
     fun goToNextMonth() = sharedMonthState.goToNextMonth()
     fun goToPreviousMonth() = sharedMonthState.goToPreviousMonth()
     fun canGoToNextMonth() = sharedMonthState.canGoToNextMonth()

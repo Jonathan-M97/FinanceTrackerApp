@@ -71,4 +71,16 @@ class TransactionRepository @Inject constructor(
             transactionRemoteDataSource.getTotalMonthlySpentAmount(userId, month)
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getTotalMonthlyIncomeAmount(
+        currentUserIdFlow: Flow<String?>,
+        yearMonth: Flow<YearMonth>
+    ): Flow<Double> =
+        combine(currentUserIdFlow, yearMonth) { userId, month ->
+            userId to month
+        }.flatMapLatest { (userId, month) ->
+            if (userId == null) return@flatMapLatest flowOf(0.0)
+            transactionRemoteDataSource.getTotalMonthlyIncomeAmount(userId, month)
+        }
+
 }
