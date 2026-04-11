@@ -419,18 +419,20 @@ exports.purgeSyncedTransactions = onCall(async (request) => {
     cutoff.setDate(1); // Start of that month
     cutoff.setHours(0, 0, 0, 0);
 
-    // Query synced transactions within the window
-    // Uses ownerId + date range (avoids needing a composite index on isManuallyCreated)
+    // Query by ownerId only (uses existing single-field index),
+    // then filter by date and isManuallyCreated in memory to
+    // avoid needing composite indexes.
     const txnSnapshot = await db
         .collection("transactions")
         .where("ownerId", "==", userId)
-        .where("date", ">=", cutoff)
         .get();
 
-    // Filter to only Plaid-synced transactions in memory
-    const syncedDocs = txnSnapshot.docs.filter(
-        (doc) => doc.data().isManuallyCreated === false,
-    );
+    const syncedDocs = txnSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+      if (data.isManuallyCreated !== false) return false;
+      const txnDate = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+      return txnDate >= cutoff;
+    });
 
     if (syncedDocs.length === 0) {
       return {deleted: 0, message: "No synced transactions found in the last 2 months."};
