@@ -68,7 +68,7 @@
     <string name="linked_plaid_categories">Linked Plaid Categories</string>
     <string name="purge_synced_transactions">Purge Synced Transactions</string>
     <string name="purge_synced_transactions_title">Purge synced transactions</string>
-    <string name="purge_synced_transactions_description">This will delete all bank-synced transactions from the last 2 months and reset sync cursors. You can sync again afterward to re-fetch them with corrected data.</string>
+    <string name="purge_synced_transactions_description">This will delete all bank-synced transactions from the last 2 months and reset sync cursors. Manually created transactions will not be affected. You can sync again afterward to re-fetch them with corrected data.</string>
     <string name="purge">Purge</string>
 
 </resources>

@@ -419,15 +419,20 @@ exports.purgeSyncedTransactions = onCall(async (request) => {
     cutoff.setDate(1); // Start of that month
     cutoff.setHours(0, 0, 0, 0);
 
-    // Query Plaid-synced transactions within the window
+    // Query synced transactions within the window
+    // Uses ownerId + date range (avoids needing a composite index on isManuallyCreated)
     const txnSnapshot = await db
         .collection("transactions")
         .where("ownerId", "==", userId)
-        .where("isManuallyCreated", "==", false)
         .where("date", ">=", cutoff)
         .get();
 
-    if (txnSnapshot.empty) {
+    // Filter to only Plaid-synced transactions in memory
+    const syncedDocs = txnSnapshot.docs.filter(
+        (doc) => doc.data().isManuallyCreated === false,
+    );
+
+    if (syncedDocs.length === 0) {
       return {deleted: 0, message: "No synced transactions found in the last 2 months."};
     }
 
@@ -436,17 +441,17 @@ exports.purgeSyncedTransactions = onCall(async (request) => {
     let batch = db.batch();
     let batchCount = 0;
 
-    txnSnapshot.forEach((doc) => {
+    for (const doc of syncedDocs) {
       batch.delete(doc.ref);
       batchCount++;
       deleted++;
 
       if (batchCount === 500) {
-        batch.commit();
+        await batch.commit();
         batch = db.batch();
         batchCount = 0;
       }
-    });
+    }
 
     if (batchCount > 0) {
       await batch.commit();
