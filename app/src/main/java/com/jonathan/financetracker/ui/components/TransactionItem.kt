@@ -39,7 +39,7 @@ fun TransactionItem(
     modifier: Modifier = Modifier,
     onItemClick: (String) -> Unit
 ) {
-    val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
     val isExpense = transaction.type == "Expense"
 
     Card(
@@ -96,24 +96,18 @@ fun TransactionItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (transaction.methodOfPayment.isNotBlank()) {
+                    Text(
+                        text = "·",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (transaction.budgetName.isNotBlank()) {
                         Text(
-                            text = "·",
+                            text = transaction.budgetName,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Text(
-                            text = transaction.methodOfPayment,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (transaction.budgetName.isBlank()) {
-                        Text(
-                            text = "·",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
+                    } else {
                         Text(
                             text = "Uncategorized",
                             style = MaterialTheme.typography.bodySmall,
