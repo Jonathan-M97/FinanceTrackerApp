@@ -101,7 +101,14 @@ fun TransactionItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (transaction.budgetName.isNotBlank()) {
+                    if (!isExpense) {
+                        Text(
+                            text = "Income",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else if (transaction.budgetName.isNotBlank()) {
                         Text(
                             text = transaction.budgetName,
                             style = MaterialTheme.typography.bodySmall,
