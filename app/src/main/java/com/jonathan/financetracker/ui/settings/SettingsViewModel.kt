@@ -82,13 +82,13 @@ class SettingsViewModel @Inject constructor(
     // ─── Plaid ───────────────────────────────────────────────────────
 
     fun loadLinkedAccounts() {
-        launchCatching(::showError) {
+        launchCatching(::showPlaidError) {
             _linkedAccounts.value = plaidRepository.getLinkedAccounts()
         }
     }
 
     fun createLinkToken() {
-        launchCatching(::showError) {
+        launchCatching(::showPlaidError) {
             val token = plaidRepository.createLinkToken()
             _linkToken.value = token
         }
@@ -144,7 +144,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun unlinkAccount(itemId: String) {
-        launchCatching(::showError) {
+        launchCatching(::showPlaidError) {
             plaidRepository.unlinkAccount(itemId)
             loadLinkedAccounts()
         }

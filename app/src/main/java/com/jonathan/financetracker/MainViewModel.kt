@@ -1,5 +1,6 @@
 package com.jonathan.financetracker
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
@@ -21,6 +22,7 @@ open class MainViewModel : ViewModel() {
     ) =
         viewModelScope.launch(
             CoroutineExceptionHandler { _, throwable ->
+                Log.e("FinanceTracker", "launchCatching caught", throwable)
                 Firebase.crashlytics.recordException(throwable)
                 val error = mapExceptionToError(throwable)
                 showErrorSnackbar(error)
