@@ -2,6 +2,7 @@ package com.jonathan.financetracker.data.repository
 
 import com.jonathan.financetracker.data.datasource.PlaidRemoteDataSource
 import com.jonathan.financetracker.data.model.LinkedAccount
+import com.jonathan.financetracker.data.model.SyncResult
 import javax.inject.Inject
 
 class PlaidRepository @Inject constructor(
@@ -25,7 +26,7 @@ class PlaidRepository @Inject constructor(
         )
     }
 
-    suspend fun syncTransactions(): Int {
+    suspend fun syncTransactions(): SyncResult {
         return plaidRemoteDataSource.syncTransactions()
     }
 

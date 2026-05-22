@@ -1,6 +1,7 @@
 package com.jonathan.financetracker.ui.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
+import com.jonathan.financetracker.data.model.LinkStatus
 import com.jonathan.financetracker.data.model.LinkedAccount
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
 import com.jonathan.financetracker.ui.components.DeleteButton
@@ -328,13 +331,23 @@ fun LinkedAccountItem(
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
 
+    val isHealthy = account.status == LinkStatus.OK
+    // Hard-coded color values rather than the theme palette so the
+    // green/red signals read clearly in both light and dark mode.
+    val borderColor = if (isHealthy) {
+        Color(0xFF2E7D32) // green 800
+    } else {
+        Color(0xFFC62828) // red 800
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        ),
+        border = BorderStroke(2.dp, borderColor)
     ) {
         Row(
             modifier = Modifier
@@ -348,16 +361,29 @@ fun LinkedAccountItem(
                 modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.size(12.dp))
-            Text(
-                text = account.institutionName.ifBlank { "Linked Bank" },
-                modifier = Modifier.weight(1f),
-                fontSize = 16.sp
-            )
-            IconButton(onClick = onReconnect) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = stringResource(R.string.reconnect_account)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = account.institutionName.ifBlank { "Linked Bank" },
+                    fontSize = 16.sp
                 )
+                if (!isHealthy) {
+                    Text(
+                        text = stringResource(R.string.needs_reconnect_label),
+                        fontSize = 12.sp,
+                        color = borderColor
+                    )
+                }
+            }
+            // Reconnect affordance only when the item actually needs
+            // attention — keeps the healthy-state UI uncluttered.
+            if (!isHealthy) {
+                IconButton(onClick = onReconnect) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = stringResource(R.string.reconnect_account),
+                        tint = borderColor
+                    )
+                }
             }
             IconButton(onClick = { showUnlinkDialog = true }) {
                 Icon(
@@ -499,8 +525,16 @@ fun SettingsScreenPreview() {
             isAnonymous = false,
             userEmail = "jon.doe@email.com",
             linkedAccounts = listOf(
-                LinkedAccount(itemId = "1", institutionName = "Chase"),
-                LinkedAccount(itemId = "2", institutionName = "Bank of America")
+                LinkedAccount(
+                    itemId = "1",
+                    institutionName = "Chase",
+                    status = LinkStatus.OK
+                ),
+                LinkedAccount(
+                    itemId = "2",
+                    institutionName = "Bank of America",
+                    status = LinkStatus.NEEDS_REAUTH
+                )
             ),
             onLinkBankAccount = {},
             onSyncTransactions = {},

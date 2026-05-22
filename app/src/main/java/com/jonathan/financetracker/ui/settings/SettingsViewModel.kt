@@ -126,13 +126,14 @@ class SettingsViewModel @Inject constructor(
     /**
      * Called when Plaid Link returns successfully from an update-mode
      * flow. Update mode does not issue a new public_token — the existing
-     * access_token is now re-authorized, so we just clear state and
-     * surface a confirmation.
+     * access_token is now re-authorized server-side. We immediately
+     * trigger a sync so the item's lastSyncStatus flips from
+     * "needs_reauth" to "ok" and the UI's red outline turns green
+     * without making the user manually tap Sync.
      */
     fun onPlaidUpdateComplete() {
         _isUpdateMode.value = false
-        _syncResultMessage.value =
-            application.getString(R.string.bank_reconnected_message)
+        syncTransactions()
     }
 
     fun exchangePublicToken(
@@ -150,8 +151,19 @@ class SettingsViewModel @Inject constructor(
         launchCatching(::showPlaidError) {
             _isSyncing.value = true
             try {
-                val count = plaidRepository.syncTransactions()
-                _syncResultMessage.value = "Synced $count transactions."
+                val result = plaidRepository.syncTransactions()
+                _syncResultMessage.value = if (result.failed > 0) {
+                    application.getString(
+                        R.string.sync_partial_message,
+                        result.added,
+                        result.failed
+                    )
+                } else {
+                    application.getString(R.string.sync_success_message, result.added)
+                }
+                // Refresh linked accounts so per-item status colors update
+                // with whatever the sync wrote to Firestore.
+                _linkedAccounts.value = plaidRepository.getLinkedAccounts()
             } finally {
                 _isSyncing.value = false
             }
