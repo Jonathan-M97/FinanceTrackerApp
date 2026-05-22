@@ -6,6 +6,7 @@ import com.jonathan.financetracker.MainViewModel
 import com.jonathan.financetracker.R
 import com.jonathan.financetracker.data.model.ErrorMessage
 import com.jonathan.financetracker.data.model.LinkedAccount
+import com.jonathan.financetracker.data.model.SyncResult
 import com.jonathan.financetracker.data.repository.AuthRepository
 import com.jonathan.financetracker.data.repository.PlaidRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -85,14 +86,23 @@ class SettingsViewModel @Inject constructor(
     // ─── Plaid ───────────────────────────────────────────────────────
 
     fun loadLinkedAccounts() {
-        launchCatching(::showError) {
+        launchCatching(::showPlaidError) {
             _linkedAccounts.value = plaidRepository.getLinkedAccounts()
         }
     }
 
     fun createLinkToken() {
-        launchCatching(::showError) {
+        launchCatching(::showPlaidError) {
+            _isUpdateMode.value = false
             val token = plaidRepository.createLinkToken()
+            _linkToken.value = token
+        }
+    }
+
+    fun createUpdateLinkToken(itemId: String) {
+        launchCatching(::showPlaidError) {
+            _isUpdateMode.value = true
+            val token = plaidRepository.createUpdateLinkToken(itemId)
             _linkToken.value = token
         }
     }
@@ -104,6 +114,27 @@ class SettingsViewModel @Inject constructor(
     fun onPlaidLinkError(message: String?) {
         _errorMessage.value = message
             ?: application.getString(R.string.error_plaid_link_failed)
+    }
+
+    /**
+     * Called from the Plaid launcher whenever the Link flow returns
+     * (success or exit), so update-mode state doesn't leak across flows.
+     */
+    fun onPlaidLinkExit() {
+        _isUpdateMode.value = false
+    }
+
+    /**
+     * Called when Plaid Link returns successfully from an update-mode
+     * flow. Update mode does not issue a new public_token — the existing
+     * access_token is now re-authorized server-side. We immediately
+     * trigger a sync so the item's lastSyncStatus flips from
+     * "needs_reauth" to "ok" and the UI's red outline turns green
+     * without making the user manually tap Sync.
+     */
+    fun onPlaidUpdateComplete() {
+        _isUpdateMode.value = false
+        syncTransactions()
     }
 
     fun exchangePublicToken(
@@ -121,8 +152,19 @@ class SettingsViewModel @Inject constructor(
         launchCatching(::showPlaidError) {
             _isSyncing.value = true
             try {
-                val count = plaidRepository.syncTransactions()
-                _syncResultMessage.value = "Synced $count transactions."
+                val result: SyncResult = plaidRepository.syncTransactions()
+                _syncResultMessage.value = if (result.failed > 0) {
+                    application.getString(
+                        R.string.sync_partial_message,
+                        result.added,
+                        result.failed
+                    )
+                } else {
+                    application.getString(R.string.sync_success_message, result.added)
+                }
+                // Refresh linked accounts so per-item status colors update
+                // with whatever the sync wrote to Firestore.
+                _linkedAccounts.value = plaidRepository.getLinkedAccounts()
             } finally {
                 _isSyncing.value = false
             }
@@ -147,7 +189,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun unlinkAccount(itemId: String) {
-        launchCatching(::showError) {
+        launchCatching(::showPlaidError) {
             plaidRepository.unlinkAccount(itemId)
             loadLinkedAccounts()
         }
