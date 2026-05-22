@@ -37,6 +37,9 @@ class SettingsViewModel @Inject constructor(
     private val _linkToken = MutableStateFlow<String?>(null)
     val linkToken: StateFlow<String?> = _linkToken.asStateFlow()
 
+    private val _isUpdateMode = MutableStateFlow(false)
+    val isUpdateMode: StateFlow<Boolean> = _isUpdateMode.asStateFlow()
+
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
@@ -89,7 +92,16 @@ class SettingsViewModel @Inject constructor(
 
     fun createLinkToken() {
         launchCatching(::showError) {
+            _isUpdateMode.value = false
             val token = plaidRepository.createLinkToken()
+            _linkToken.value = token
+        }
+    }
+
+    fun createUpdateLinkToken(itemId: String) {
+        launchCatching(::showPlaidError) {
+            _isUpdateMode.value = true
+            val token = plaidRepository.createUpdateLinkToken(itemId)
             _linkToken.value = token
         }
     }
@@ -101,6 +113,26 @@ class SettingsViewModel @Inject constructor(
     fun onPlaidLinkError(message: String?) {
         _errorMessage.value = message
             ?: application.getString(R.string.error_plaid_link_failed)
+    }
+
+    /**
+     * Called from the Plaid launcher whenever the Link flow returns
+     * (success or exit), so update-mode state doesn't leak across flows.
+     */
+    fun onPlaidLinkExit() {
+        _isUpdateMode.value = false
+    }
+
+    /**
+     * Called when Plaid Link returns successfully from an update-mode
+     * flow. Update mode does not issue a new public_token — the existing
+     * access_token is now re-authorized, so we just clear state and
+     * surface a confirmation.
+     */
+    fun onPlaidUpdateComplete() {
+        _isUpdateMode.value = false
+        _syncResultMessage.value =
+            application.getString(R.string.bank_reconnected_message)
     }
 
     fun exchangePublicToken(

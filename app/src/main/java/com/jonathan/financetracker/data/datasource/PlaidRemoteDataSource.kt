@@ -15,6 +15,15 @@ class PlaidRemoteDataSource @Inject constructor(
             ?: throw Exception("Invalid response: missing link token")
     }
 
+    suspend fun createUpdateLinkToken(itemId: String): String {
+        val data = callFunction(
+            "createUpdateLinkToken",
+            hashMapOf("itemId" to itemId)
+        )
+        return data["linkToken"] as? String
+            ?: throw Exception("Invalid response: missing link token")
+    }
+
     suspend fun exchangePublicToken(
         publicToken: String,
         institutionName: String,

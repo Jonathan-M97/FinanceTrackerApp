@@ -11,6 +11,10 @@ class PlaidRepository @Inject constructor(
         return plaidRemoteDataSource.createLinkToken()
     }
 
+    suspend fun createUpdateLinkToken(itemId: String): String {
+        return plaidRemoteDataSource.createUpdateLinkToken(itemId)
+    }
+
     suspend fun exchangePublicToken(
         publicToken: String,
         institutionName: String,

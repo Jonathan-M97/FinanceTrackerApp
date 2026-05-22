@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
@@ -78,6 +79,7 @@ fun SettingsScreen(
         val userEmail by viewModel.userEmail.collectAsStateWithLifecycle()
         val linkedAccounts by viewModel.linkedAccounts.collectAsStateWithLifecycle()
         val linkToken by viewModel.linkToken.collectAsStateWithLifecycle()
+        val isUpdateMode by viewModel.isUpdateMode.collectAsStateWithLifecycle()
         val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
         val syncResultMessage by viewModel.syncResultMessage.collectAsStateWithLifecycle()
 
@@ -106,13 +108,19 @@ fun SettingsScreen(
         ) { result ->
             when (result) {
                 is LinkSuccess -> {
-                    val publicToken = result.publicToken
-                    val institution = result.metadata.institution
-                    viewModel.exchangePublicToken(
-                        publicToken = publicToken,
-                        institutionName = institution?.name ?: "",
-                        institutionId = institution?.id ?: ""
-                    )
+                    if (isUpdateMode) {
+                        // Update mode: existing access_token is now re-authorized.
+                        // No public_token to exchange.
+                        viewModel.onPlaidUpdateComplete()
+                    } else {
+                        val publicToken = result.publicToken
+                        val institution = result.metadata.institution
+                        viewModel.exchangePublicToken(
+                            publicToken = publicToken,
+                            institutionName = institution?.name ?: "",
+                            institutionId = institution?.id ?: ""
+                        )
+                    }
                 }
                 is LinkExit -> {
                     result.error?.let { error ->
@@ -120,6 +128,7 @@ fun SettingsScreen(
                             error.displayMessage ?: error.errorMessage
                         )
                     }
+                    viewModel.onPlaidLinkExit()
                 }
             }
         }
@@ -147,6 +156,7 @@ fun SettingsScreen(
             onLinkBankAccount = viewModel::createLinkToken,
             onSyncTransactions = viewModel::syncTransactions,
             onUnlinkAccount = viewModel::unlinkAccount,
+            onReconnectAccount = viewModel::createUpdateLinkToken,
             onPurgeSyncedTransactions = viewModel::purgeSyncedTransactions,
             isSyncing = isSyncing,
             snackbarHostState = snackbarHostState
@@ -169,6 +179,7 @@ fun SettingsScreenContent(
     onLinkBankAccount: () -> Unit,
     onSyncTransactions: () -> Unit,
     onUnlinkAccount: (String) -> Unit,
+    onReconnectAccount: (String) -> Unit,
     onPurgeSyncedTransactions: () -> Unit,
     isSyncing: Boolean,
     snackbarHostState: SnackbarHostState
@@ -250,7 +261,8 @@ fun SettingsScreenContent(
                     linkedAccounts.forEach { account ->
                         LinkedAccountItem(
                             account = account,
-                            onUnlink = { onUnlinkAccount(account.itemId) }
+                            onUnlink = { onUnlinkAccount(account.itemId) },
+                            onReconnect = { onReconnectAccount(account.itemId) }
                         )
                     }
                 }
@@ -311,7 +323,8 @@ fun SettingsScreenContent(
 @Composable
 fun LinkedAccountItem(
     account: LinkedAccount,
-    onUnlink: () -> Unit
+    onUnlink: () -> Unit,
+    onReconnect: () -> Unit
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
 
@@ -340,6 +353,12 @@ fun LinkedAccountItem(
                 modifier = Modifier.weight(1f),
                 fontSize = 16.sp
             )
+            IconButton(onClick = onReconnect) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = stringResource(R.string.reconnect_account)
+                )
+            }
             IconButton(onClick = { showUnlinkDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -486,6 +505,7 @@ fun SettingsScreenPreview() {
             onLinkBankAccount = {},
             onSyncTransactions = {},
             onUnlinkAccount = {},
+            onReconnectAccount = {},
             onPurgeSyncedTransactions = {},
             isSyncing = false,
             snackbarHostState = SnackbarHostState()

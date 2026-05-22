@@ -113,6 +113,67 @@ exports.createLinkToken = onCall(
     },
 );
 
+// ─── 1b. Create Update-Mode Link Token ──────────────────────────────
+// Creates a link token tied to an existing item's access_token so the
+// user can re-authenticate (e.g. after ITEM_LOGIN_REQUIRED) without
+// having to unlink and relink the bank.
+exports.createUpdateLinkToken = onCall(
+    {
+      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ENV"],
+    },
+    async (request) => {
+      if (!request.auth) {
+        throw new HttpsError(
+            "unauthenticated",
+            "User must be signed in to reconnect a bank account.",
+        );
+      }
+
+      const userId = request.auth.uid;
+      await checkRateLimit(userId);
+      const {itemId} = request.data;
+
+      if (!itemId) {
+        throw new HttpsError(
+            "invalid-argument",
+            "itemId is required.",
+        );
+      }
+
+      try {
+        // Verify ownership and grab the access token
+        const itemDoc = await db.collection("plaid_items").doc(itemId).get();
+        if (!itemDoc.exists || itemDoc.data().ownerId !== userId) {
+          throw new HttpsError("not-found", "Linked account not found.");
+        }
+        const accessToken = itemDoc.data().accessToken;
+
+        // Update mode: pass access_token, omit `products`
+        const response = await getPlaidClient().linkTokenCreate({
+          user: {client_user_id: userId},
+          client_name: "Finance Tracker",
+          country_codes: ["US"],
+          language: "en",
+          access_token: accessToken,
+          android_package_name: "com.jonathan.financetracker",
+        });
+
+        logger.info("Update link token created", {userId, itemId});
+        return {linkToken: response.data.link_token};
+      } catch (error) {
+        if (error instanceof HttpsError) throw error;
+        logger.error("Error creating update link token", {
+          error: error.message,
+          plaidCode: error.response?.data?.error_code,
+        });
+        throw new HttpsError(
+            "internal",
+            getPlaidErrorMessage(error, "Failed to create update link token."),
+        );
+      }
+    },
+);
+
 // ─── 2. Exchange Public Token ────────────────────────────────────────
 // Called after user completes Plaid Link — exchanges public_token
 // for a permanent access_token and stores it in Firestore
