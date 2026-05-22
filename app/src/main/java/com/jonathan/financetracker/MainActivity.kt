@@ -106,14 +106,7 @@ class MainActivity : ComponentActivity() {
                             }
                             composable<AddTransactionRoute> { AddTransactionScreen(
                                 openDashboard = {
-                                    // Pop back to the existing MainTabsRoute entry so its
-                                    // ViewModels (filter/sort, pager page, etc.) survive.
-                                    // navigate(MainTabsRoute) would push a fresh entry and
-                                    // reset every tab's state. Fall back to navigate only if
-                                    // the back stack is somehow empty (deep-link edge case).
-                                    if (!navController.popBackStack()) {
-                                        navController.navigate(MainTabsRoute) { launchSingleTop = true }
-                                    }
+                                    navController.navigate(MainTabsRoute) { launchSingleTop = true }
                                 },
                                 showErrorSnackbar = { errorMessage ->
                                     val message = getErrorMessage(errorMessage)
@@ -122,9 +115,7 @@ class MainActivity : ComponentActivity() {
                             ) }
                             composable<AddBudgetRoute> { AddBudgetScreen(
                                 openDashboard = {
-                                    if (!navController.popBackStack()) {
-                                        navController.navigate(MainTabsRoute) { launchSingleTop = true }
-                                    }
+                                    navController.navigate(MainTabsRoute) { launchSingleTop = true }
                                 },
                                 openBudget = {
                                     navController.navigate(MainTabsRoute) {

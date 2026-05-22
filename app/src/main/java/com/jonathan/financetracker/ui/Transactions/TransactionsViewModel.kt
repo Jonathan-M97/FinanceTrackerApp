@@ -3,6 +3,7 @@ package com.jonathan.financetracker.ui.Transactions
 import androidx.lifecycle.viewModelScope
 import com.jonathan.financetracker.MainViewModel
 import com.jonathan.financetracker.data.SharedMonthState
+import com.jonathan.financetracker.data.SharedTransactionFilterState
 import com.jonathan.financetracker.data.model.Transaction
 import com.jonathan.financetracker.data.repository.AuthRepository
 import com.jonathan.financetracker.data.repository.TransactionRepository
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -35,6 +37,7 @@ class TransactionsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val transactionRepository: TransactionRepository,
     private val sharedMonthState: SharedMonthState,
+    private val sharedFilterState: SharedTransactionFilterState,
 ) : MainViewModel() {
 
     val selectedMonth: StateFlow<YearMonth> = sharedMonthState.selectedMonth
@@ -42,8 +45,7 @@ class TransactionsViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _filterState = MutableStateFlow(TransactionFilterState())
-    val filterState: StateFlow<TransactionFilterState> = _filterState.asStateFlow()
+    val filterState: StateFlow<TransactionFilterState> = sharedFilterState.filterState
 
     private val rawTransactions: StateFlow<List<Transaction>> =
         transactionRepository.getMonthlyTransactions(
@@ -67,7 +69,7 @@ class TransactionsViewModel @Inject constructor(
         )
 
     val transactions: StateFlow<List<Transaction>> =
-        combine(rawTransactions, _filterState) { transactions, filter ->
+        combine(rawTransactions, filterState) { transactions, filter ->
             var result = transactions
 
             // Type filter
@@ -102,37 +104,23 @@ class TransactionsViewModel @Inject constructor(
         )
 
     init {
-        selectedMonth.onEach {
-            _filterState.value = _filterState.value.copy(selectedCategories = emptySet())
+        // Clear category filter when the user navigates to a different
+        // month, since categories are scoped per-month. drop(1) skips
+        // the StateFlow's initial replay so we don't clobber any
+        // categories the user had selected before this ViewModel was
+        // re-created (e.g. after returning from AddTransaction).
+        selectedMonth.drop(1).onEach {
+            sharedFilterState.clearCategories()
         }.launchIn(viewModelScope)
     }
 
-    fun setTypeFilter(filter: TransactionTypeFilter) {
-        _filterState.value = _filterState.value.copy(typeFilter = filter)
-    }
+    fun setTypeFilter(filter: TransactionTypeFilter) = sharedFilterState.setTypeFilter(filter)
 
-    fun toggleCategory(category: String) {
-        val current = _filterState.value.selectedCategories
-        _filterState.value = _filterState.value.copy(
-            selectedCategories = if (category in current) current - category else current + category
-        )
-    }
+    fun toggleCategory(category: String) = sharedFilterState.toggleCategory(category)
 
-    fun clearCategoryFilter() {
-        _filterState.value = _filterState.value.copy(selectedCategories = emptySet())
-    }
+    fun clearCategoryFilter() = sharedFilterState.clearCategories()
 
-    fun toggleSort(field: SortField) {
-        val current = _filterState.value
-        _filterState.value = if (current.sortField == field) {
-            current.copy(
-                sortDirection = if (current.sortDirection == SortDirection.DESCENDING)
-                    SortDirection.ASCENDING else SortDirection.DESCENDING
-            )
-        } else {
-            current.copy(sortField = field, sortDirection = SortDirection.DESCENDING)
-        }
-    }
+    fun toggleSort(field: SortField) = sharedFilterState.toggleSort(field)
 
     fun goToNextMonth() = sharedMonthState.goToNextMonth()
     fun goToPreviousMonth() = sharedMonthState.goToPreviousMonth()
