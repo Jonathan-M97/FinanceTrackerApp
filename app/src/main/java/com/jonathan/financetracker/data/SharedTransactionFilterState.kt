@@ -4,24 +4,32 @@ import com.jonathan.financetracker.ui.Transactions.SortDirection
 import com.jonathan.financetracker.ui.Transactions.SortField
 import com.jonathan.financetracker.ui.Transactions.TransactionFilterState
 import com.jonathan.financetracker.ui.Transactions.TransactionTypeFilter
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Holds the transaction-screen filter and sort selections at the
- * application scope so they survive TransactionsViewModel recreation.
+ * Activity-retained scope so they survive TransactionsViewModel
+ * recreation while still resetting when the user truly relaunches
+ * the app.
  *
  * The Transactions tab's ViewModel can be torn down and re-created
  * whenever the user navigates to AddTransaction and the nav graph
  * pushes a fresh MainTabsRoute entry on return. Without a shared
  * holder, every save/delete would reset the user's filter/sort
- * selections back to defaults. Mirrors the pattern of
- * [SharedMonthState] for selectedMonth.
+ * selections back to defaults.
+ *
+ * @ActivityRetainedScoped means the same instance is shared across
+ * configuration changes (rotation, theme) and ViewModel re-creations
+ * within a single Activity, but a brand-new instance is created when
+ * the Activity is finished and re-launched (cold start from launcher,
+ * post-process-death restart, etc.). That gives the user a "fresh"
+ * filter state on every real app launch.
  */
-@Singleton
+@ActivityRetainedScoped
 class SharedTransactionFilterState @Inject constructor() {
 
     private val _filterState = MutableStateFlow(TransactionFilterState())
