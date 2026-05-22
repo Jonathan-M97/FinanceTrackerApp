@@ -45,7 +45,9 @@ open class MainViewModel : ViewModel() {
             is IllegalStateException ->
                 ErrorMessage.IdError(R.string.error_sign_in_required)
             else ->
-                ErrorMessage.IdError(R.string.generic_error)
+                throwable.message?.takeIf { it.isNotBlank() }
+                    ?.let { ErrorMessage.StringError(it) }
+                    ?: ErrorMessage.IdError(R.string.generic_error)
         }
     }
 }
