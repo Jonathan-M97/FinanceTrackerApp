@@ -2,7 +2,9 @@ package com.jonathan.financetracker.data.datasource
 
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
+import com.jonathan.financetracker.data.model.LinkStatus
 import com.jonathan.financetracker.data.model.LinkedAccount
+import com.jonathan.financetracker.data.model.SyncResult
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -11,6 +13,15 @@ class PlaidRemoteDataSource @Inject constructor(
 ) {
     suspend fun createLinkToken(): String {
         val data = callFunction("createLinkToken")
+        return data["linkToken"] as? String
+            ?: throw Exception("Invalid response: missing link token")
+    }
+
+    suspend fun createUpdateLinkToken(itemId: String): String {
+        val data = callFunction(
+            "createUpdateLinkToken",
+            hashMapOf("itemId" to itemId)
+        )
         return data["linkToken"] as? String
             ?: throw Exception("Invalid response: missing link token")
     }
@@ -32,9 +43,12 @@ class PlaidRemoteDataSource @Inject constructor(
             ?: throw Exception("Invalid response: missing item ID")
     }
 
-    suspend fun syncTransactions(): Int {
+    suspend fun syncTransactions(): SyncResult {
         val data = callFunction("syncTransactions")
-        return (data["added"] as? Number)?.toInt() ?: 0
+        return SyncResult(
+            added = (data["added"] as? Number)?.toInt() ?: 0,
+            failed = (data["failed"] as? Number)?.toInt() ?: 0
+        )
     }
 
     suspend fun getLinkedAccounts(): List<LinkedAccount> {
@@ -45,7 +59,8 @@ class PlaidRemoteDataSource @Inject constructor(
             val account = item as? Map<*, *> ?: return@mapNotNull null
             LinkedAccount(
                 itemId = account["itemId"] as? String ?: "",
-                institutionName = account["institutionName"] as? String ?: "Unknown Bank"
+                institutionName = account["institutionName"] as? String ?: "Unknown Bank",
+                status = LinkStatus.fromString(account["status"] as? String)
             )
         }
     }

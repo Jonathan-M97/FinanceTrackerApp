@@ -37,6 +37,9 @@ class SettingsViewModel @Inject constructor(
     private val _linkToken = MutableStateFlow<String?>(null)
     val linkToken: StateFlow<String?> = _linkToken.asStateFlow()
 
+    private val _isUpdateMode = MutableStateFlow(false)
+    val isUpdateMode: StateFlow<Boolean> = _isUpdateMode.asStateFlow()
+
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
@@ -82,13 +85,13 @@ class SettingsViewModel @Inject constructor(
     // ─── Plaid ───────────────────────────────────────────────────────
 
     fun loadLinkedAccounts() {
-        launchCatching(::showPlaidError) {
+        launchCatching(::showError) {
             _linkedAccounts.value = plaidRepository.getLinkedAccounts()
         }
     }
 
     fun createLinkToken() {
-        launchCatching(::showPlaidError) {
+        launchCatching(::showError) {
             val token = plaidRepository.createLinkToken()
             _linkToken.value = token
         }
@@ -144,7 +147,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun unlinkAccount(itemId: String) {
-        launchCatching(::showPlaidError) {
+        launchCatching(::showError) {
             plaidRepository.unlinkAccount(itemId)
             loadLinkedAccounts()
         }

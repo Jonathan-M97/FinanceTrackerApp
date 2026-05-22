@@ -113,6 +113,67 @@ exports.createLinkToken = onCall(
     },
 );
 
+// ─── 1b. Create Update-Mode Link Token ──────────────────────────────
+// Creates a link token tied to an existing item's access_token so the
+// user can re-authenticate (e.g. after ITEM_LOGIN_REQUIRED) without
+// having to unlink and relink the bank.
+exports.createUpdateLinkToken = onCall(
+    {
+      secrets: ["PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ENV"],
+    },
+    async (request) => {
+      if (!request.auth) {
+        throw new HttpsError(
+            "unauthenticated",
+            "User must be signed in to reconnect a bank account.",
+        );
+      }
+
+      const userId = request.auth.uid;
+      await checkRateLimit(userId);
+      const {itemId} = request.data;
+
+      if (!itemId) {
+        throw new HttpsError(
+            "invalid-argument",
+            "itemId is required.",
+        );
+      }
+
+      try {
+        // Verify ownership and grab the access token
+        const itemDoc = await db.collection("plaid_items").doc(itemId).get();
+        if (!itemDoc.exists || itemDoc.data().ownerId !== userId) {
+          throw new HttpsError("not-found", "Linked account not found.");
+        }
+        const accessToken = itemDoc.data().accessToken;
+
+        // Update mode: pass access_token, omit `products`
+        const response = await getPlaidClient().linkTokenCreate({
+          user: {client_user_id: userId},
+          client_name: "Finance Tracker",
+          country_codes: ["US"],
+          language: "en",
+          access_token: accessToken,
+          android_package_name: "com.jonathan.financetracker",
+        });
+
+        logger.info("Update link token created", {userId, itemId});
+        return {linkToken: response.data.link_token};
+      } catch (error) {
+        if (error instanceof HttpsError) throw error;
+        logger.error("Error creating update link token", {
+          error: error.message,
+          plaidCode: error.response?.data?.error_code,
+        });
+        throw new HttpsError(
+            "internal",
+            getPlaidErrorMessage(error, "Failed to create update link token."),
+        );
+      }
+    },
+);
+
 // ─── 2. Exchange Public Token ────────────────────────────────────────
 // Called after user completes Plaid Link — exchanges public_token
 // for a permanent access_token and stores it in Firestore
@@ -200,10 +261,15 @@ exports.syncTransactions = onCall(
             .get();
 
         if (itemsSnapshot.empty) {
-          return {added: 0, message: "No linked accounts found."};
+          return {
+            added: 0,
+            failed: 0,
+            message: "No linked accounts found.",
+          };
         }
 
         let totalAdded = 0;
+        let failedItems = 0;
 
         // Fetch user's Plaid category-to-budget mappings
         const mappingSnapshot = await db
@@ -220,81 +286,125 @@ exports.syncTransactions = onCall(
         cutoffDate.setDate(cutoffDate.getDate() - 60);
         const cutoffStr = cutoffDate.toISOString().substring(0, 10);
 
+        // Per-item: any failure on one bank does NOT prevent the others
+        // from syncing. We record the status on each item doc so the UI
+        // can show a Reconnect affordance just for the broken ones.
         for (const itemDoc of itemsSnapshot.docs) {
           const item = itemDoc.data();
           let cursor = item.cursor;
           let hasMore = true;
+          let itemAdded = 0;
 
-          while (hasMore) {
-            const syncResponse = await getPlaidClient().transactionsSync({
-              access_token: item.accessToken,
-              cursor: cursor || undefined,
-            });
-
-            const {added, modified, removed, next_cursor, has_more} =
-                syncResponse.data;
-
-            // Process added transactions
-            const batch = db.batch();
-            for (const txn of added) {
-              // Skip transactions older than 60 days
-              if (txn.date < cutoffStr) continue;
-
-              const yearMonth = txn.date.substring(0, 7); // "yyyy-MM"
-
-              // Apply category-to-budget mapping
-              const topLevelCategory = txn.category
-                  ? txn.category[0]
-                  : null;
-              const mapping = topLevelCategory
-                  ? categoryMappings[topLevelCategory]
-                  : null;
-
-              const docRef = db.collection("transactions").doc();
-              batch.set(docRef, {
-                description: txn.name || txn.merchant_name || "Unknown",
-                amount: Math.abs(txn.amount),
-                date: new Date(txn.date + "T12:00:00"),
-                type: txn.amount < 0 ? "Income" : "Expense",
-                methodOfPayment: txn.payment_channel || "Other",
-                budgetName: mapping ? mapping.budgetName : "",
-                budgetId: mapping ? mapping.budgetId : "",
-                ownerId: userId,
-                yearMonth: yearMonth,
-                isManuallyCreated: false,
-                plaidTransactionId: txn.transaction_id,
-                plaidCategory: txn.category
-                    ? txn.category.join(", ")
-                    : "",
-                plaidItemId: item.itemId,
+          try {
+            while (hasMore) {
+              const syncResponse = await getPlaidClient().transactionsSync({
+                access_token: item.accessToken,
+                cursor: cursor || undefined,
               });
+
+              const {added, removed, next_cursor, has_more} =
+                  syncResponse.data;
+
+              // Process added transactions
+              const batch = db.batch();
+              for (const txn of added) {
+                // Skip transactions older than 60 days
+                if (txn.date < cutoffStr) continue;
+
+                const yearMonth = txn.date.substring(0, 7); // "yyyy-MM"
+
+                // Apply category-to-budget mapping
+                const topLevelCategory = txn.category
+                    ? txn.category[0]
+                    : null;
+                const mapping = topLevelCategory
+                    ? categoryMappings[topLevelCategory]
+                    : null;
+
+                const docRef = db.collection("transactions").doc();
+                batch.set(docRef, {
+                  description: txn.name || txn.merchant_name || "Unknown",
+                  amount: Math.abs(txn.amount),
+                  date: new Date(txn.date + "T12:00:00"),
+                  type: txn.amount < 0 ? "Income" : "Expense",
+                  methodOfPayment: txn.payment_channel || "Other",
+                  budgetName: mapping ? mapping.budgetName : "",
+                  budgetId: mapping ? mapping.budgetId : "",
+                  ownerId: userId,
+                  yearMonth: yearMonth,
+                  isManuallyCreated: false,
+                  plaidTransactionId: txn.transaction_id,
+                  plaidCategory: txn.category
+                      ? txn.category.join(", ")
+                      : "",
+                  plaidItemId: item.itemId,
+                });
+              }
+
+              // Process removed transactions
+              if (removed.length > 0) {
+                const removedIds = removed.map((r) => r.transaction_id);
+                const existingTxns = await db
+                    .collection("transactions")
+                    .where("ownerId", "==", userId)
+                    .where("plaidTransactionId", "in", removedIds.slice(0, 10))
+                    .get();
+                existingTxns.forEach((doc) => batch.delete(doc.ref));
+              }
+
+              await batch.commit();
+              itemAdded += added.length;
+
+              // Update cursor for incremental sync
+              cursor = next_cursor;
+              hasMore = has_more;
             }
 
-            // Process removed transactions
-            if (removed.length > 0) {
-              const removedIds = removed.map((r) => r.transaction_id);
-              const existingTxns = await db
-                  .collection("transactions")
-                  .where("ownerId", "==", userId)
-                  .where("plaidTransactionId", "in", removedIds.slice(0, 10))
-                  .get();
-              existingTxns.forEach((doc) => batch.delete(doc.ref));
-            }
-
-            await batch.commit();
-            totalAdded += added.length;
-
-            // Update cursor for incremental sync
-            cursor = next_cursor;
-            hasMore = has_more;
+            // Item synced cleanly — persist new cursor and clear any
+            // prior error state.
+            await itemDoc.ref.update({
+              cursor,
+              lastSyncStatus: "ok",
+              lastSyncError: null,
+              lastSyncedAt: FieldValue.serverTimestamp(),
+            });
+            totalAdded += itemAdded;
+          } catch (itemError) {
+            failedItems += 1;
+            const plaidCode = itemError.response?.data?.error_code;
+            // ITEM_LOGIN_REQUIRED is the recoverable case — Plaid Link
+            // update mode can fix it. Everything else is "error" so the
+            // UI can still flag it but won't necessarily promise relink.
+            const status = plaidCode === "ITEM_LOGIN_REQUIRED"
+                ? "needs_reauth"
+                : "error";
+            logger.warn("Item sync failed, continuing with other items", {
+              userId,
+              itemId: item.itemId,
+              plaidCode,
+              status,
+            });
+            await itemDoc.ref.update({
+              lastSyncStatus: status,
+              lastSyncError: plaidCode || itemError.message || "unknown",
+              lastSyncedAt: FieldValue.serverTimestamp(),
+            });
           }
-
-          // Save the cursor so next sync is incremental
-          await itemDoc.ref.update({cursor});
         }
 
-        logger.info("Transaction sync complete", {userId, totalAdded});
-        return {added: totalAdded, message: `Synced ${totalAdded} transactions.`};
+        logger.info("Transaction sync complete", {
+          userId,
+          totalAdded,
+          failedItems,
+        });
+        const message = failedItems > 0
+            ? `Synced ${totalAdded} transactions. ${failedItems} bank(s) need attention.`
+            : `Synced ${totalAdded} transactions.`;
+        return {
+          added: totalAdded,
+          failed: failedItems,
+          message,
+        };
       } catch (error) {
         logger.error("Error syncing transactions", {
           error: error.message,
@@ -323,11 +433,17 @@ exports.getLinkedAccounts = onCall(async (request) => {
         .where("ownerId", "==", userId)
         .get();
 
-    const accounts = itemsSnapshot.docs.map((doc) => ({
-      itemId: doc.data().itemId,
-      institutionName: doc.data().institutionName,
-      createdAt: doc.data().createdAt,
-    }));
+    const accounts = itemsSnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        itemId: data.itemId,
+        institutionName: data.institutionName,
+        createdAt: data.createdAt,
+        // Defaults to "ok" for items synced before status tracking
+        // shipped (no lastSyncStatus field yet).
+        status: data.lastSyncStatus || "ok",
+      };
+    });
 
     return {accounts};
   } catch (error) {

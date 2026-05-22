@@ -1,6 +1,7 @@
 package com.jonathan.financetracker.ui.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
@@ -38,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jonathan.financetracker.R
+import com.jonathan.financetracker.data.model.LinkStatus
 import com.jonathan.financetracker.data.model.LinkedAccount
 import com.jonathan.financetracker.ui.components.CenterTopAppBar
 import com.jonathan.financetracker.ui.components.DeleteButton
@@ -78,6 +82,7 @@ fun SettingsScreen(
         val userEmail by viewModel.userEmail.collectAsStateWithLifecycle()
         val linkedAccounts by viewModel.linkedAccounts.collectAsStateWithLifecycle()
         val linkToken by viewModel.linkToken.collectAsStateWithLifecycle()
+        val isUpdateMode by viewModel.isUpdateMode.collectAsStateWithLifecycle()
         val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
         val syncResultMessage by viewModel.syncResultMessage.collectAsStateWithLifecycle()
 
@@ -106,13 +111,19 @@ fun SettingsScreen(
         ) { result ->
             when (result) {
                 is LinkSuccess -> {
-                    val publicToken = result.publicToken
-                    val institution = result.metadata.institution
-                    viewModel.exchangePublicToken(
-                        publicToken = publicToken,
-                        institutionName = institution?.name ?: "",
-                        institutionId = institution?.id ?: ""
-                    )
+                    if (isUpdateMode) {
+                        // Update mode: existing access_token is now re-authorized.
+                        // No public_token to exchange.
+                        viewModel.onPlaidUpdateComplete()
+                    } else {
+                        val publicToken = result.publicToken
+                        val institution = result.metadata.institution
+                        viewModel.exchangePublicToken(
+                            publicToken = publicToken,
+                            institutionName = institution?.name ?: "",
+                            institutionId = institution?.id ?: ""
+                        )
+                    }
                 }
                 is LinkExit -> {
                     result.error?.let { error ->
@@ -120,6 +131,7 @@ fun SettingsScreen(
                             error.displayMessage ?: error.errorMessage
                         )
                     }
+                    viewModel.onPlaidLinkExit()
                 }
             }
         }
@@ -147,6 +159,7 @@ fun SettingsScreen(
             onLinkBankAccount = viewModel::createLinkToken,
             onSyncTransactions = viewModel::syncTransactions,
             onUnlinkAccount = viewModel::unlinkAccount,
+            onReconnectAccount = viewModel::createUpdateLinkToken,
             onPurgeSyncedTransactions = viewModel::purgeSyncedTransactions,
             isSyncing = isSyncing,
             snackbarHostState = snackbarHostState
@@ -169,6 +182,7 @@ fun SettingsScreenContent(
     onLinkBankAccount: () -> Unit,
     onSyncTransactions: () -> Unit,
     onUnlinkAccount: (String) -> Unit,
+    onReconnectAccount: (String) -> Unit,
     onPurgeSyncedTransactions: () -> Unit,
     isSyncing: Boolean,
     snackbarHostState: SnackbarHostState
@@ -250,7 +264,8 @@ fun SettingsScreenContent(
                     linkedAccounts.forEach { account ->
                         LinkedAccountItem(
                             account = account,
-                            onUnlink = { onUnlinkAccount(account.itemId) }
+                            onUnlink = { onUnlinkAccount(account.itemId) },
+                            onReconnect = { onReconnectAccount(account.itemId) }
                         )
                     }
                 }
@@ -311,9 +326,19 @@ fun SettingsScreenContent(
 @Composable
 fun LinkedAccountItem(
     account: LinkedAccount,
-    onUnlink: () -> Unit
+    onUnlink: () -> Unit,
+    onReconnect: () -> Unit
 ) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
+
+    val isHealthy = account.status == LinkStatus.OK
+    // Hard-coded color values rather than the theme palette so the
+    // green/red signals read clearly in both light and dark mode.
+    val borderColor = if (isHealthy) {
+        Color(0xFF2E7D32) // green 800
+    } else {
+        Color(0xFFC62828) // red 800
+    }
 
     Card(
         modifier = Modifier
@@ -321,7 +346,8 @@ fun LinkedAccountItem(
             .padding(horizontal = 24.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        ),
+        border = BorderStroke(2.dp, borderColor)
     ) {
         Row(
             modifier = Modifier
@@ -335,11 +361,30 @@ fun LinkedAccountItem(
                 modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.size(12.dp))
-            Text(
-                text = account.institutionName.ifBlank { "Linked Bank" },
-                modifier = Modifier.weight(1f),
-                fontSize = 16.sp
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = account.institutionName.ifBlank { "Linked Bank" },
+                    fontSize = 16.sp
+                )
+                if (!isHealthy) {
+                    Text(
+                        text = stringResource(R.string.needs_reconnect_label),
+                        fontSize = 12.sp,
+                        color = borderColor
+                    )
+                }
+            }
+            // Reconnect affordance only when the item actually needs
+            // attention — keeps the healthy-state UI uncluttered.
+            if (!isHealthy) {
+                IconButton(onClick = onReconnect) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = stringResource(R.string.reconnect_account),
+                        tint = borderColor
+                    )
+                }
+            }
             IconButton(onClick = { showUnlinkDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -480,12 +525,21 @@ fun SettingsScreenPreview() {
             isAnonymous = false,
             userEmail = "jon.doe@email.com",
             linkedAccounts = listOf(
-                LinkedAccount(itemId = "1", institutionName = "Chase"),
-                LinkedAccount(itemId = "2", institutionName = "Bank of America")
+                LinkedAccount(
+                    itemId = "1",
+                    institutionName = "Chase",
+                    status = LinkStatus.OK
+                ),
+                LinkedAccount(
+                    itemId = "2",
+                    institutionName = "Bank of America",
+                    status = LinkStatus.NEEDS_REAUTH
+                )
             ),
             onLinkBankAccount = {},
             onSyncTransactions = {},
             onUnlinkAccount = {},
+            onReconnectAccount = {},
             onPurgeSyncedTransactions = {},
             isSyncing = false,
             snackbarHostState = SnackbarHostState()
